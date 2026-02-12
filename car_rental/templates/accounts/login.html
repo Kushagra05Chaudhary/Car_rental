@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Login</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <p style="color:red;">{{ message }}</p>
+    {% endfor %}
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Login</button>
+</form>
+
+<hr>
+
+<h3>Login with OTP</h3>
+<a href="{% url 'otp_login' %}">Login via OTP</a>
+
+<br><br>
+<a href="{% url 'register' %}">Don't have an account? Register here.</a>
+
+{% endblock %}

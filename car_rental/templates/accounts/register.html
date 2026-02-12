@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Register</h2>
+
+{% if form.errors %}
+    <div style="color:red;">
+        {{ form.errors }}
+    </div>
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+
+    <label>Username:</label>
+    {{ form.username }}
+
+    <br><br>
+
+    <label>Email:</label>
+    {{ form.email }}
+
+    <br><br>
+
+    <label>Phone:</label>
+    {{ form.phone }}
+
+    <br><br>
+
+    <label>Role:</label>
+    {{ form.role }}
+
+    <br><br>
+
+    <label>Password:</label>
+    {{ form.password1 }}
+
+    <br><br>
+
+    <label>Confirm Password:</label>
+    {{ form.password2 }}
+
+    <br><br>
+
+    <button type="submit">Register</button>
+</form>
+
+<p>
+    Already have an account?
+    <a href="{% url 'login' %}">Login</a>
+</p>
+
+{% endblock %}
