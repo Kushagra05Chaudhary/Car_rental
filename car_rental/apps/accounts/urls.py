@@ -9,5 +9,6 @@ urlpatterns = [
     # path('verify/<str:token>/', views.verify_email, name='verify_email'),
     path('otp-login/', views.send_otp, name='otp_login'),
     path('verify-otp/', views.verify_otp, name='verify_otp'),
+    path('resend-otp/', views.resend_registration_otp, name='resend_registration_otp'),
     
 ]

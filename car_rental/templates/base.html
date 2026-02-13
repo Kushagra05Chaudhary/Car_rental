@@ -31,6 +31,13 @@
     </header>
 
     <main class="page">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message {{ message.tags }}" style="padding: 15px; margin: 20px auto; max-width: 600px; background: {% if message.tags == 'success' %}#d4edda{% elif message.tags == 'error' %}#f8d7da{% else %}#d1ecf1{% endif %}; border-radius: 8px; color: #000;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
         {% block content %}{% endblock %}
     </main>
 </body>
