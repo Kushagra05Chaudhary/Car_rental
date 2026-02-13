@@ -1,23 +1,37 @@
 <!DOCTYPE html>
 <html>
 <head>
+    {% load static %}
     <title>Car Rental System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
 </head>
 <body>
+    <div class="orb one"></div>
+    <div class="orb two"></div>
 
-<nav>
-    {% if user.is_authenticated %}
-        Welcome, {{ user.username }} |
-        <a href="{% url 'logout' %}">Logout</a>
-    {% else %}
-        <a href="{% url 'login' %}">Login</a> |
-        <a href="{% url 'register' %}">Register</a>
-    {% endif %}
-</nav>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <div class="brand">
+                <span class="brand-mark">CR</span>
+                Car Rental
+            </div>
+            <nav class="nav-links">
+                {% if user.is_authenticated %}
+                    <span>Welcome, {{ user.username }}</span>
+                    <a href="{% url 'logout' %}">Logout</a>
+                {% else %}
+                    <a href="{% url 'login' %}">Login</a>
+                    <a href="{% url 'register' %}">Register</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
 
-<hr>
-
-{% block content %}{% endblock %}
-
+    <main class="page">
+        {% block content %}{% endblock %}
+    </main>
 </body>
 </html>

@@ -1,18 +1,29 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>Verify OTP</h2>
+<section class="auth-shell single">
+    <div class="auth-card" style="max-width: 520px; width: 100%;">
+        <h2>Verify OTP</h2>
+        <p class="muted small">Check your inbox and enter the 6-digit code.</p>
 
-{% if error %}
-    <p style="color:red;">{{ error }}</p>
-{% endif %}
+        {% if error %}
+            <div class="alert">{{ error }}</div>
+        {% endif %}
 
-<form method="post">
-    {% csrf_token %}
-    <input type="text" name="otp" placeholder="Enter OTP" required>
-    <button type="submit">Verify OTP</button>
-</form>
+        <form method="post" class="form">
+            {% csrf_token %}
+            <p>
+                <label for="id_otp">OTP Code</label>
+                <input id="id_otp" type="text" name="otp" placeholder="123456" required>
+            </p>
+            <button class="btn primary" type="submit">Verify OTP</button>
+        </form>
 
-<a href="{% url 'otp_login' %}">Resend OTP</a>
-
+        <div class="divider">need a new code?</div>
+        <div class="btn-row">
+            <a class="btn ghost" href="{% url 'otp_login' %}">Resend OTP</a>
+            <a class="link" href="{% url 'login' %}">Use password login</a>
+        </div>
+    </div>
+</section>
 {% endblock %}

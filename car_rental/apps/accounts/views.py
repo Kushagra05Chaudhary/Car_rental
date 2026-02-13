@@ -38,19 +38,7 @@ def register_view(request):
 
     return render(request, 'accounts/register.html', {'form': form})
 
-def verify_email(request, token):
-    session_token = request.session.get('verify_token')
-    user_id = request.session.get('verify_user')
 
-    if token == session_token and user_id:
-        user = CustomUser.objects.get(id=user_id)
-        user.is_active = True
-        user.is_email_verified = True
-        user.save()
-
-        return render(request, 'accounts/email_verified.html')
-
-    return redirect('register')
 
 def login_view(request):
     if request.method == 'POST':

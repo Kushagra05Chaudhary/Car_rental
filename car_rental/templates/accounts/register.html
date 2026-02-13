@@ -1,53 +1,66 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>Register</h2>
-
-{% if form.errors %}
-    <div style="color:red;">
-        {{ form.errors }}
+<section class="auth-shell">
+    <div class="auth-hero">
+        <div class="eyebrow">Join the fleet</div>
+        <h1>Create your account and hit the road.</h1>
+        <p class="muted">Track bookings, manage rides, and unlock member-only deals across the city.</p>
+        <div class="hero-stats">
+            <div class="stat">
+                <strong>No hidden fees</strong>
+                Transparent pricing
+            </div>
+            <div class="stat">
+                <strong>Flexible plans</strong>
+                Hourly or daily
+            </div>
+            <div class="stat">
+                <strong>Verified owners</strong>
+                Trusted partners
+            </div>
+            <div class="stat">
+                <strong>Smart support</strong>
+                Help in minutes
+            </div>
+        </div>
     </div>
-{% endif %}
 
-<form method="post">
-    {% csrf_token %}
+    <div class="auth-card">
+        <h2>Register</h2>
+        <p class="muted small">Fill in your details to create a new account.</p>
 
-    <label>Username:</label>
-    {{ form.username }}
+        {% if form.errors %}
+            <div class="alert">{{ form.errors }}</div>
+        {% endif %}
 
-    <br><br>
+        <form method="post" class="form">
+            {% csrf_token %}
+            <p>
+                <label for="id_username">Username</label>
+                {{ form.username }}
+            </p>
+            <p>
+                <label for="id_email">Email</label>
+                {{ form.email }}
+            </p>
+            <p>
+                <label for="id_phone">Phone</label>
+                {{ form.phone }}
+            </p>
+            <p>
+                <label for="id_password1">Password</label>
+                {{ form.password1 }}
+            </p>
+            <p>
+                <label for="id_password2">Confirm Password</label>
+                {{ form.password2 }}
+            </p>
+            <button class="btn primary" type="submit">Create Account</button>
+        </form>
 
-    <label>Email:</label>
-    {{ form.email }}
-
-    <br><br>
-
-    <label>Phone:</label>
-    {{ form.phone }}
-
-    <br><br>
-
-    <label>Role:</label>
-    {{ form.role }}
-
-    <br><br>
-
-    <label>Password:</label>
-    {{ form.password1 }}
-
-    <br><br>
-
-    <label>Confirm Password:</label>
-    {{ form.password2 }}
-
-    <br><br>
-
-    <button type="submit">Register</button>
-</form>
-
-<p>
-    Already have an account?
-    <a href="{% url 'login' %}">Login</a>
-</p>
-
+        <div class="divider">already a member?</div>
+        <a class="link" href="{% url 'login' %}">Login to your account</a>
+    </div>
+</section>
 {% endblock %}

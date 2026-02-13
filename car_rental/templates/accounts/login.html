@@ -1,26 +1,53 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>Login</h2>
+<section class="auth-shell">
+    <div class="auth-hero">
+        <div class="eyebrow">Drive smarter</div>
+        <h1>Welcome back to your next ride.</h1>
+        <p class="muted">Sign in to manage bookings, unlock member rates, and keep every trip moving.</p>
+        <div class="hero-stats">
+            <div class="stat">
+                <strong>120+ cars</strong>
+                Curated premium fleet
+            </div>
+            <div class="stat">
+                <strong>15 min</strong>
+                Avg pickup time
+            </div>
+            <div class="stat">
+                <strong>24/7</strong>
+                Roadside support
+            </div>
+            <div class="stat">
+                <strong>4.9★</strong>
+                Verified guest ratings
+            </div>
+        </div>
+    </div>
 
-{% if messages %}
-    {% for message in messages %}
-        <p style="color:red;">{{ message }}</p>
-    {% endfor %}
-{% endif %}
+    <div class="auth-card">
+        <h2>Login</h2>
+        <p class="muted small">Use your email and password to access your dashboard.</p>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Login</button>
-</form>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
 
-<hr>
+        <form method="post" class="form">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="btn primary" type="submit">Login</button>
+        </form>
 
-<h3>Login with OTP</h3>
-<a href="{% url 'otp_login' %}">Login via OTP</a>
+        <div class="divider">or</div>
 
-<br><br>
-<a href="{% url 'register' %}">Don't have an account? Register here.</a>
-
+        <div class="btn-row">
+            <a class="btn ghost" href="{% url 'otp_login' %}">Login via OTP</a>
+            <a class="link" href="{% url 'register' %}">Create a new account</a>
+        </div>
+    </div>
+</section>
 {% endblock %}
