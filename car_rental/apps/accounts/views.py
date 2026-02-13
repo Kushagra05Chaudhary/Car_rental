@@ -20,18 +20,10 @@ def register_view(request):
             request.session['verify_token'] = token
             request.session['verify_user'] = user.id
 
-            verification_link = request.build_absolute_uri(
-                reverse('verify_email', args=[token])
-            )
+           
+            
 
-            send_mail(
-                'Verify Your Email',
-                f'Click the link to verify your email: {verification_link}',
-                settings.EMAIL_HOST_USER,
-                [user.email],
-            )
-
-            return render(request, 'accounts/check_email.html')
+            return render(request, 'accounts/user_dashboard.html', {'message': 'Registration successful! Please check your email to verify your account.'})
 
     else:
         form = RegisterForm()

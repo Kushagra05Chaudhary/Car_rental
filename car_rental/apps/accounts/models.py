@@ -3,14 +3,13 @@ from django.db import models
 
 class CustomUser(AbstractUser):
 
-    # ROLE_CHOICES = (
-    #     ('admin', 'Admin'),
-    #     ('owner', 'Owner'),
-    #     ('user', 'User'),
-    # )
+    ROLE_CHOICES = (
+        ('admin', 'Admin'),
+        ('owner', 'Owner'),
+        ('user', 'User'),
+    )
 
-    # role = models.CharField(max_length=10, choices=ROLE_CHOICES)
-    role=models.CharField(max_length=10, default='user')
+    role=models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')
     phone = models.CharField(max_length=15, blank=True, null=True)
     is_email_verified = models.BooleanField(default=False)
     def __str__(self):
