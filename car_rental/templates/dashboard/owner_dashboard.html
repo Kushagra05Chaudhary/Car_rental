@@ -1,15 +1,13 @@
-{% extends 'base.html' %}
+{% extends 'dashboard/dashboard_base.html' %}
 
-{% block content %}
+{% block dashboard_content %}
+
 <h2>Owner Dashboard</h2>
-
 <p>Welcome {{ user.username }}</p>
 
-<ul>
-    <li>Add Car</li>
-    <li>My Cars</li>
-    <li>Booking Requests</li>
-    <li>Earnings</li>
-</ul>
+<div>
+    <div>My Cars: {{ my_cars }}</div>
+    <div>Pending Bookings: {{ pending_bookings }}</div>
+</div>
 
 {% endblock %}

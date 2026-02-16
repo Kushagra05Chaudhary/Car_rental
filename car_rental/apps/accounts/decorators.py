@@ -14,6 +14,10 @@ def role_required(*roles):
             if not request.user.is_authenticated:
                 messages.error(request, 'You must be logged in to access this page.')
                 return redirect('login')
+
+            # Allow Django superusers to bypass role checks.
+            if request.user.is_superuser:
+                return view_func(request, *args, **kwargs)
             
             if request.user.role not in roles:
                 messages.error(request, 'You do not have permission to access this page.')

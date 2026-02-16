@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div style="display:flex;">
+
+    <!-- Sidebar -->
+    <div style="width:200px; background:#f0f0f0; padding:15px;">
+        <h3>Dashboard</h3>
+        <ul style="list-style:none; padding:0;">
+            {% if user.role == 'admin' %}
+                <li><a href="{% url 'admin_dashboard' %}">Admin Home</a></li>
+            {% elif user.role == 'owner' %}
+                <li><a href="{% url 'owner_dashboard' %}">Owner Home</a></li>
+            {% else %}
+                <li><a href="{% url 'user_dashboard' %}">User Home</a></li>
+            {% endif %}
+            <li><a href="{% url 'logout' %}">Logout</a></li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div style="flex:1; padding:20px;">
+        {% block dashboard_content %}
+        {% endblock %}
+    </div>
+
+</div>
+
+{% endblock %}
