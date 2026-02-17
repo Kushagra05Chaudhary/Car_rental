@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib import messages
 from .forms import RegisterForm
 from .models import CustomUser, OTP
+from .models import OwnerRequest
 import random
 
 
@@ -188,3 +189,21 @@ def resend_registration_otp(request):
         return redirect('verify_otp')
 
     return redirect('register')
+
+
+@login_required
+def become_owner(request):
+
+    if request.user.role != 'user':
+        messages.error(request, "You are already an owner or admin.")
+        return redirect('dashboard_redirect')
+
+    # Prevent duplicate request
+    if OwnerRequest.objects.filter(user=request.user, status='pending').exists():
+        messages.warning(request, "You already have a pending request.")
+        return redirect('user_dashboard')
+
+    OwnerRequest.objects.create(user=request.user)
+
+    messages.success(request, "Owner request submitted. Wait for admin approval.")
+    return redirect('user_dashboard')

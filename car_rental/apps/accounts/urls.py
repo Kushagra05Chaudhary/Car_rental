@@ -10,5 +10,7 @@ urlpatterns = [
     path('otp-login/', views.send_otp, name='otp_login'),
     path('verify-otp/', views.verify_otp, name='verify_otp'),
     path('resend-otp/', views.resend_registration_otp, name='resend_registration_otp'),
+    path('become-owner/', views.become_owner, name='become_owner'),
+
     
 ]
