@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h2>{{ car.name }}</h2>
+
+<p>Brand: {{ car.brand }}</p>
+<p>Seats: {{ car.seats }}</p>
+<p>Price per day: ₹{{ car.price_per_day }}</p>
+
+{% if car.image %}
+    <img src="{{ car.image.url }}" width="300">
+{% endif %}
+
+<br><br>
+
+<a href="{% url 'car_list' %}">Back to Cars</a>
+
+{% endblock %}

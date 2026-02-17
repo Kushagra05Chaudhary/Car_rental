@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h2>Available Cars</h2>
+
+{% if cars %}
+    <div>
+        {% for car in cars %}
+            <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
+                
+                <h3>{{ car.name }}</h3>
+                <p>Brand: {{ car.brand }}</p>
+                <p>Seats: {{ car.seats }}</p>
+                <p>Price per day: ₹{{ car.price_per_day }}</p>
+
+                {% if car.image %}
+                    <img src="{{ car.image.url }}" width="200">
+                {% endif %}
+
+                <br><br>
+
+                <a href="{% url 'car_detail' car.id %}">View Details</a>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>No cars available yet.</p>
+{% endif %}
+
+{% endblock %}
