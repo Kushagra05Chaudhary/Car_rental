@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 
 class Car(models.Model):
 
@@ -17,13 +18,17 @@ class Car(models.Model):
 
     name = models.CharField(max_length=100)
     brand = models.CharField(max_length=100)
+    car_type = models.CharField(max_length=50, default="Sedan")
+    location = models.CharField(max_length=100)
+
     price_per_day = models.DecimalField(max_digits=10, decimal_places=2)
     seats = models.IntegerField()
     image = models.ImageField(upload_to='car_images/', null=True, blank=True)
 
+    is_available = models.BooleanField(default=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return self.name

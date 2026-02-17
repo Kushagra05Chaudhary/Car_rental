@@ -23,10 +23,19 @@ def add_car(request):
 
 
 def car_list(request):
-    cars = Car.objects.filter(status='approved')
-    return render(request, 'cars/car_list.html', {'cars': cars})
+    cars = Car.objects.filter(status='approved', is_available=True)
+    return render(request, 'cars/car_list.html', {
+        'cars': cars
+    })
+
 
 
 def car_detail(request, pk):
-    car = get_object_or_404(Car, pk=pk, status='approved')
-    return render(request, 'cars/car_detail.html', {'car': car})
+    car = get_object_or_404(
+        Car,
+        pk=pk,
+        status='approved'
+    )
+    return render(request, 'cars/car_detail.html', {
+        'car': car
+    })

@@ -3,6 +3,10 @@
 {% block dashboard_content %}
 
 <h2>User Dashboard</h2>
+<a href="{% url 'car_list' %}" class="btn btn-success">
+    Browse Cars
+</a>
+
 <p>Welcome {{ user.username }}</p>
 <a href="{% url 'become_owner' %}">Become Owner</a>
 
