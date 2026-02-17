@@ -11,5 +11,11 @@
     <div>My Cars: {{ my_cars }}</div>
     <div>Pending Bookings: {{ pending_bookings }}</div>
 </div>
+<ul>
+{% for car in owner_cars %}
+    <li>{{ car.name }} - {{ car.status }}</li>
+{% endfor %}
+</ul>
+
 
 {% endblock %}

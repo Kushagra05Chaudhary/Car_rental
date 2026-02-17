@@ -2,6 +2,8 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from apps.accounts.decorators import role_required
 from apps.accounts.models import CustomUser
+from apps.cars.models import Car
+
 
 # Temporary imports (will work when car/booking models exist)
 # from apps.cars.models import Car
@@ -22,16 +24,19 @@ def admin_dashboard(request):
     return render(request, 'dashboard/admin_dashboard.html', context)
 
 
+
 @login_required
 @role_required('owner')
 def owner_dashboard(request):
 
+    owner_cars = Car.objects.filter(owner=request.user)
+
     context = {
-        'my_cars': 0,
-        'pending_bookings': 0,
+        'owner_cars': owner_cars,
     }
 
     return render(request, 'dashboard/owner_dashboard.html', context)
+
 
 
 @login_required

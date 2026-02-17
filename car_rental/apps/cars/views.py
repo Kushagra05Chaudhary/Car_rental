@@ -12,6 +12,7 @@ def add_car(request):
         if form.is_valid():
             car = form.save(commit=False)
             car.owner = request.user
+            car.status = 'pending'
             car.save()
             return redirect('owner_dashboard')
     else:
