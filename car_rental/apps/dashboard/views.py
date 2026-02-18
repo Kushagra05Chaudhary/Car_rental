@@ -10,6 +10,9 @@ from apps.cars.models import Car
 # from apps.bookings.models import Booking
 
 
+from apps.accounts.models import CustomUser, OwnerRequest
+from apps.cars.models import Car
+
 @login_required
 @role_required('admin')
 def admin_dashboard(request):
@@ -17,14 +20,72 @@ def admin_dashboard(request):
     context = {
         'total_users': CustomUser.objects.filter(role='user').count(),
         'total_owners': CustomUser.objects.filter(role='owner').count(),
-        'total_cars': 0,  # update when Car model ready
-        'total_bookings': 0,  # update later
+        'total_cars': Car.objects.count(),
+        'pending_cars': Car.objects.filter(status='pending').count(),
+        'pending_owner_requests': OwnerRequest.objects.filter(status='pending').count(),
     }
 
     return render(request, 'dashboard/admin_dashboard.html', context)
 
+@login_required
+@role_required('admin')
+def admin_car_approval(request):
+
+    cars = Car.objects.filter(status='pending')
+
+    return render(request, 'dashboard/admin_car_approval.html', {
+        'cars': cars
+    })
+
+@login_required
+@role_required('admin')
+def approve_car(request, pk):
+    car = Car.objects.get(pk=pk)
+    car.status = 'approved'
+    car.save()
+    return redirect('admin_car_approval')
 
 
+@login_required
+@role_required('admin')
+def reject_car(request, pk):
+    car = Car.objects.get(pk=pk)
+    car.status = 'rejected'
+    car.save()
+    return redirect('admin_car_approval')
+
+@login_required
+@role_required('admin')
+def admin_owner_requests(request):
+
+    requests = OwnerRequest.objects.filter(status='pending')
+
+    return render(request, 'dashboard/admin_owner_requests.html', {
+        'requests': requests
+    })
+@login_required
+@role_required('admin')
+def approve_owner(request, pk):
+    req = OwnerRequest.objects.get(pk=pk)
+    req.status = 'approved'
+    req.save()
+
+    user = req.user
+    user.role = 'owner'
+    user.save()
+
+    return redirect('admin_owner_requests')
+
+
+@login_required
+@role_required('admin')
+def reject_owner(request, pk):
+    req = OwnerRequest.objects.get(pk=pk)
+    req.status = 'rejected'
+    req.save()
+
+    return redirect('admin_owner_requests')
+    
 @login_required
 @role_required('owner')
 def owner_dashboard(request):
