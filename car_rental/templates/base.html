@@ -1,23 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html class="scroll-smooth">
 <head>
     <title>Car Rental System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
 </head>
 <body>
+    <div class="orb one"></div>
+    <div class="orb two"></div>
 
-<nav>
-    {% if user.is_authenticated %}
-        Welcome, {{ user.username }} |
-        <a href="{% url 'logout' %}">Logout</a>
-    {% else %}
-        <a href="{% url 'login' %}">Login</a> |
-        <a href="{% url 'register' %}">Register</a>
-    {% endif %}
-</nav>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <div class="brand">
+                <span class="brand-mark">CR</span>
+                Car Rental
+            </div>
+            <nav class="nav-links">
+                {% if user.is_authenticated %}
+                    <span>Welcome, {{ user.username }}</span>
+                    <a href="{% url 'logout' %}">Logout</a>
+                {% else %}
+                    <a href="{% url 'login' %}">Login</a>
+                    <a href="{% url 'register' %}">Register</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
 
-<hr>
-
-{% block content %}{% endblock %}
-
+    <main class="page">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message {{ message.tags }}" style="padding: 15px; margin: 20px auto; max-width: 600px; background: {% if message.tags == 'success' %}#d4edda{% elif message.tags == 'error' %}#f8d7da{% else %}#d1ecf1{% endif %}; border-radius: 8px; color: #000;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
 </body>
 </html>

@@ -1,3 +1,45 @@
 from django.shortcuts import render
 
+<<<<<<< HEAD
 # Create your views here.
+=======
+@login_required
+@role_required('owner')
+def add_car(request):
+
+    if request.method == 'POST':
+        form = CarForm(request.POST, request.FILES)
+        if form.is_valid():
+            car = form.save(commit=False)
+            car.owner = request.user
+            car.status = 'pending'
+            car.save()
+            return redirect('owner_dashboard')
+    else:
+        form = CarForm()
+
+    return render(request, 'cars/add_car.html', {'form': form})
+
+
+def car_list(request):
+    cars = Car.objects.filter(status='approved', is_available=True)
+    return render(request, 'cars/car_list.html', {
+        'cars': cars
+    })
+
+
+
+# def car_detail(request, pk):
+#     car = get_object_or_404(
+#         Car,
+#         pk=pk,
+#         status='approved'
+#     )
+#     return render(request, 'cars/car_detail.html', {
+#         'car': car
+#     })
+
+def car_detail(request, id):
+    car = Car.objects.get(id=id)
+    return render(request, "cars/car_detail.html", {"car": car})
+>>>>>>> 3308118 (18 feb landing page)
