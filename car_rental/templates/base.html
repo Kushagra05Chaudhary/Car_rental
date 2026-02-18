@@ -28,104 +28,26 @@
         }
     </style>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
 </head>
+<body>
 
-<body class="bg-gray-50 text-gray-800 dark:bg-slate-900 dark:text-white">
+<nav>
+    {% if user.is_authenticated %}
+        Welcome, {{ user.username }} |
+        <a href="{% url 'logout' %}">Logout</a>
+    {% else %}
+        <a href="{% url 'login' %}">Login</a> |
+        <a href="{% url 'register' %}">Register</a>
+    {% endif %}
+</nav>
 
-    <!-- Navbar -->
-    <header class="bg-white border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+<hr>
 
-            <!-- Logo -->
-            <div class="flex items-center gap-3">
-                <div class="bg-indigo-600 text-white font-bold px-3 py-1.5 rounded-xl text-sm tracking-widest shadow-md">
-                    ASK
-                </div>
-                <span class="text-2xl font-semibold tracking-wide text-slate-800">
-                    Askren
-                </span>
-            </div>
-
-            <!-- Desktop Menu -->
-            <nav class="hidden md:flex items-center gap-6">
-                <a href="#" class="text-gray-600 hover:text-indigo-600 transition">
-                    Browse
-                </a>
-                <button onclick="document.documentElement.classList.toggle('dark')" 
-                    class="ml-4 text-gray-600 dark:text-gray-300">
-                    🌙
-                </button>
-
-
-                {% if user.is_authenticated %}
-                    <span class="text-gray-500">
-                        {{ user.username }}
-                    </span>
-                    <a href="{% url 'logout' %}" 
-                       class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
-                        Logout
-                    </a>
-                {% else %}
-                    <a href="{% url 'login' %}" 
-                       class="text-gray-600 hover:text-indigo-600 transition">
-                        Login
-                    </a>
-                    <a href="{% url 'register' %}" 
-                       class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
-                        Get Started
-                    </a>
-                {% endif %}
-            </nav>
-
-            <!-- Mobile Button -->
-            <button id="menu-btn" class="md:hidden text-gray-600 focus:outline-none">
-                ☰
-            </button>
-
-        </div>
-
-        <!-- Mobile Menu -->
-        <div id="mobile-menu" class="hidden md:hidden px-6 pb-4">
-            <a href="#" class="block py-2 text-gray-600">Browse</a>
-
-            {% if user.is_authenticated %}
-                <span class="block py-2 text-gray-500">{{ user.username }}</span>
-                <a href="{% url 'logout' %}" class="block py-2 text-indigo-600">Logout</a>
-            {% else %}
-                <a href="{% url 'login' %}" class="block py-2 text-gray-600">Login</a>
-                <a href="{% url 'register' %}" class="block py-2 text-indigo-600">Get Started</a>
-            {% endif %}
-        </div>
-    </header>
-
-    <script>
-        const btn = document.getElementById("menu-btn");
-        const menu = document.getElementById("mobile-menu");
-
-        btn.addEventListener("click", () => {
-            menu.classList.toggle("hidden");
-        });
-    </script>
-
-
-
-
-    <main class="page">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="message {{ message.tags }} fade-in" style="padding: 15px; margin: 20px auto; max-width: 600px; background: {% if message.tags == 'success' %}#d4edda{% elif message.tags == 'error' %}#f8d7da{% else %}#d1ecf1{% endif %}; border-radius: 8px; color: #000;">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-        {% block content %}{% endblock %}
-    </main>
-
-    <footer class="bg-white border-t border-gray-200 mt-20">
-        <div class="max-w-7xl mx-auto px-6 py-8 text-center text-gray-500">
-            © 2026 Askren. All rights reserved.
-        </div>
-    </footer>
+{% block content %}{% endblock %}
 
 </body>
 </html>

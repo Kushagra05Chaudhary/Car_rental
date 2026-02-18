@@ -24,6 +24,13 @@ from django.conf import settings
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('apps.accounts.urls')),
+<<<<<<< HEAD
+=======
+    path('dashboard/', include('apps.dashboard.urls')),
+    path('cars/', include('apps.cars.urls')),
+    path("", include("apps.core.urls")),
+
+>>>>>>> 3308118 (18 feb landing page)
     path('dashboard/', include('apps.dashboard.urls')),
     path('cars/', include('apps.cars.urls')),
     path("", include("apps.core.urls")),
