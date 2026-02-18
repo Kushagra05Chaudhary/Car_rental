@@ -48,11 +48,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'apps.accounts',
-<<<<<<< HEAD
-=======
-    'apps.cars',
-    'apps.core',
->>>>>>> 3308118 (18 feb landing page)
     'apps.cars',
     'apps.core',
     
