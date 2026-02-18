@@ -1,66 +1,323 @@
 {% extends 'base.html' %}
 
+{% block title %}Register - Car Rental System{% endblock %}
+
 {% block content %}
-<section class="auth-shell">
-    <div class="auth-hero">
-        <div class="eyebrow">Join the fleet</div>
-        <h1>Create your account and hit the road.</h1>
-        <p class="muted">Track bookings, manage rides, and unlock member-only deals across the city.</p>
-        <div class="hero-stats">
-            <div class="stat">
-                <strong>No hidden fees</strong>
-                Transparent pricing
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div class="grid grid-cols-1 lg:grid-cols-2 min-h-screen">
+        <!-- Left Side: Hero Section (Hidden on mobile) -->
+        <div class="hidden lg:flex flex-col justify-between bg-gradient-to-br from-green-600 via-teal-500 to-blue-600 p-12 relative overflow-hidden">
+            <!-- Animated background elements -->
+            <div class="absolute inset-0 opacity-10">
+                <div class="absolute top-20 left-10 w-64 h-64 bg-white rounded-full blur-3xl"></div>
+                <div class="absolute bottom-10 right-20 w-96 h-96 bg-white rounded-full blur-3xl"></div>
             </div>
-            <div class="stat">
-                <strong>Flexible plans</strong>
-                Hourly or daily
+
+            <div class="relative z-10 animate-fade-in">
+                <!-- Logo/Brand -->
+                <div class="flex items-center gap-3 mb-12">
+                    <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                    <span class="text-white text-xl font-bold">CarRent</span>
+                </div>
+
+                <!-- Main Heading -->
+                <div class="mb-16">
+                    <p class="text-green-100 text-sm font-semibold mb-2 uppercase tracking-wide">Join the community</p>
+                    <h1 class="text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">Create Your Account</h1>
+                    <p class="text-green-100 text-lg max-w-md">Join thousands of users managing their rides with confidence.</p>
+                </div>
             </div>
-            <div class="stat">
-                <strong>Verified owners</strong>
-                Trusted partners
+
+            <!-- Stats Section -->
+            <div class="relative z-10 grid grid-cols-2 gap-6">
+                <div class="bg-white bg-opacity-10 backdrop-blur-md rounded-lg p-4 border border-white border-opacity-20 hover:bg-opacity-20 transition-all">
+                    <div class="text-white text-2xl font-bold">No Fees</div>
+                    <div class="text-green-100 text-sm mt-1">Transparent pricing</div>
+                </div>
+                <div class="bg-white bg-opacity-10 backdrop-blur-md rounded-lg p-4 border border-white border-opacity-20 hover:bg-opacity-20 transition-all">
+                    <div class="text-white text-2xl font-bold">Flexible</div>
+                    <div class="text-green-100 text-sm mt-1">Hourly or daily</div>
+                </div>
+                <div class="bg-white bg-opacity-10 backdrop-blur-md rounded-lg p-4 border border-white border-opacity-20 hover:bg-opacity-20 transition-all">
+                    <div class="text-white text-2xl font-bold">Verified</div>
+                    <div class="text-green-100 text-sm mt-1">Trusted partners</div>
+                </div>
+                <div class="bg-white bg-opacity-10 backdrop-blur-md rounded-lg p-4 border border-white border-opacity-20 hover:bg-opacity-20 transition-all">
+                    <div class="text-white text-2xl font-bold">Support</div>
+                    <div class="text-green-100 text-sm mt-1">Help in minutes</div>
+                </div>
             </div>
-            <div class="stat">
-                <strong>Smart support</strong>
-                Help in minutes
+        </div>
+
+        <!-- Right Side: Register Form -->
+        <div class="flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 py-12 lg:py-0">
+            <div class="w-full max-w-md animate-slide-up">
+                <!-- Mobile Logo -->
+                <div class="lg:hidden mb-8 text-center">
+                    <div class="flex items-center justify-center gap-3 mb-8">
+                        <div class="w-12 h-12 bg-gradient-to-br from-green-600 to-blue-600 rounded-xl flex items-center justify-center">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </div>
+                        <span class="text-2xl font-bold text-gray-900">CarRent</span>
+                    </div>
+                </div>
+
+                <!-- Form Card -->
+                <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 max-h-screen lg:max-h-none overflow-y-auto lg:overflow-visible">
+                    <!-- Header -->
+                    <div class="mb-6">
+                        <h2 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">Create Account</h2>
+                        <p class="text-gray-600 text-sm">Join our platform and start managing your rides</p>
+                    </div>
+
+                    <!-- Non-field Errors -->
+                    {% if form.non_field_errors %}
+                        {% for error in form.non_field_errors %}
+                            <div class="mb-4 p-4 rounded-lg bg-red-50 border border-red-200 text-red-800 animate-slide-down" role="alert">
+                                <div class="flex items-start gap-3">
+                                    <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                    </svg>
+                                    <span class="text-sm font-medium">{{ error }}</span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- Form -->
+                    <form method="post" class="space-y-4" novalidate>
+                        {% csrf_token %}
+
+                        <!-- Full Name Field -->
+                        <div>
+                            <label for="id_username" class="block text-sm font-semibold text-gray-900 mb-2">Full Name or Username <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                {{ form.username }}
+                                {% if form.username.errors %}
+                                    <svg class="absolute right-4 top-3.5 w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM9 13a1 1 0 11-2 0 1 1 0 012 0z" clip-rule="evenodd" />
+                                    </svg>
+                                {% endif %}
+                            </div>
+                            {% if form.username.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.username.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Email Field -->
+                        <div>
+                            <label for="id_email" class="block text-sm font-semibold text-gray-900 mb-2">Email Address <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <svg class="absolute right-4 top-3.5 w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM9 13a1 1 0 11-2 0 1 1 0 012 0z" clip-rule="evenodd" />
+                                    </svg>
+                                {% endif %}
+                            </div>
+                            {% if form.email.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Phone Field (if exists) -->
+                        {% if form.phone %}
+                        <div>
+                            <label for="id_phone" class="block text-sm font-semibold text-gray-900 mb-2">Phone Number {% if form.phone.field.required %}<span class="text-red-500">*</span>{% endif %}</label>
+                            <div class="relative">
+                                {{ form.phone }}
+                                {% if form.phone.errors %}
+                                    <svg class="absolute right-4 top-3.5 w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM9 13a1 1 0 11-2 0 1 1 0 012 0z" clip-rule="evenodd" />
+                                    </svg>
+                                {% endif %}
+                            </div>
+                            {% if form.phone.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.phone.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Password Field -->
+                        <div>
+                            <label for="id_password1" class="block text-sm font-semibold text-gray-900 mb-2">Password <span class="text-red-500">*</span></label>
+                            <div class="relative" x-data="{ showPassword: false, passwordStrength: 0, password: '' }">
+                                <input
+                                    x-model="password"
+                                    @input="
+                                        let strength = 0;
+                                        if (password.length >= 8) strength++;
+                                        if (/[A-Z]/.test(password)) strength++;
+                                        if (/[0-9]/.test(password)) strength++;
+                                        if (/[^A-Za-z0-9]/.test(password)) strength++;
+                                        passwordStrength = strength;
+                                    "
+                                    :type="showPassword ? 'text' : 'password'"
+                                    id="id_password1"
+                                    name="password1"
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white pr-12"
+                                    placeholder="••••••••"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    @click="showPassword = !showPassword"
+                                    class="absolute right-4 top-3 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                    :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                                >
+                                    <svg x-show="!showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    <svg x-show="showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803m5.596-3.856a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <!-- Password Strength Indicator -->
+                            <div x-data="{ passwordStrength: 0 }" class="mt-2">
+                                <div class="flex gap-1">
+                                    <div class="flex-1 h-1.5 rounded-full" :class="passwordStrength >= 1 ? 'bg-red-500' : 'bg-gray-300'"></div>
+                                    <div class="flex-1 h-1.5 rounded-full" :class="passwordStrength >= 2 ? 'bg-yellow-500' : 'bg-gray-300'"></div>
+                                    <div class="flex-1 h-1.5 rounded-full" :class="passwordStrength >= 3 ? 'bg-blue-500' : 'bg-gray-300'"></div>
+                                    <div class="flex-1 h-1.5 rounded-full" :class="passwordStrength >= 4 ? 'bg-green-500' : 'bg-gray-300'"></div>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">
+                                    <span x-show="passwordStrength === 0">Enter a password</span>
+                                    <span x-show="passwordStrength === 1">Weak password</span>
+                                    <span x-show="passwordStrength === 2">Fair password</span>
+                                    <span x-show="passwordStrength === 3">Good password</span>
+                                    <span x-show="passwordStrength >= 4">Strong password</span>
+                                </p>
+                            </div>
+                            {% if form.password1.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.password1.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Confirm Password Field -->
+                        <div>
+                            <label for="id_password2" class="block text-sm font-semibold text-gray-900 mb-2">Confirm Password <span class="text-red-500">*</span></label>
+                            <div class="relative" x-data="{ showPassword: false }">
+                                <input
+                                    :type="showPassword ? 'text' : 'password'"
+                                    id="id_password2"
+                                    name="password2"
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white pr-12"
+                                    placeholder="••••••••"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    @click="showPassword = !showPassword"
+                                    class="absolute right-4 top-3 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                >
+                                    <svg x-show="!showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    <svg x-show="showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803m5.596-3.856a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </button>
+                            </div>
+                            {% if form.password2.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.password2.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Role Selection (if exists) -->
+                        {% if form.role %}
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-900 mb-3">Account Type <span class="text-red-500">*</span></label>
+                            <div class="grid grid-cols-2 gap-3">
+                                {% for value, label in form.role.field.choices %}
+                                    <label class="relative flex items-center cursor-pointer group">
+                                        <input
+                                            type="radio"
+                                            name="role"
+                                            value="{{ value }}"
+                                            class="w-4 h-4 accent-green-600 cursor-pointer"
+                                            {% if form.role.value == value %}checked{% endif %}
+                                        />
+                                        <span class="ml-3 text-sm font-medium text-gray-700 group-hover:text-gray-900 transition-colors">{{ label }}</span>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                            {% if form.role.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.role.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Terms & Conditions -->
+                        <div class="flex items-start gap-2 pt-2">
+                            <input
+                                type="checkbox"
+                                id="terms"
+                                name="terms_agree"
+                                class="w-4 h-4 border-gray-300 rounded text-green-600 focus:ring-green-500 cursor-pointer transition-all mt-1"
+                                required
+                            />
+                            <label for="terms" class="text-sm text-gray-600 cursor-pointer">
+                                I agree to the <a href="#" class="text-green-600 hover:text-green-700 font-medium">Terms & Conditions</a> and <a href="#" class="text-green-600 hover:text-green-700 font-medium">Privacy Policy</a>
+                            </label>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button
+                            type="submit"
+                            class="w-full mt-6 px-6 py-3 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 active:scale-95"
+                        >
+                            Create Account
+                        </button>
+                    </form>
+
+                    <!-- Login Link -->
+                    <div class="mt-6 text-center">
+                        <p class="text-gray-600 text-sm">
+                            Already have an account?
+                            <a href="{% url 'login' %}" class="font-bold text-green-600 hover:text-green-700 transition-colors">Sign in</a>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Footer Text -->
+                <div class="mt-8 text-center text-sm text-gray-600">
+                    <p>Your information is secure and encrypted. We'll never share your data.</p>
+                </div>
             </div>
         </div>
     </div>
+</div>
 
-    <div class="auth-card">
-        <h2>Register</h2>
-        <p class="muted small">Fill in your details to create a new account.</p>
+<style>
+    #id_username, #id_email, #id_phone, #id_password1, #id_password2 {
+        @apply w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white;
+    }
+    
+    #id_username:focus, #id_email:focus, #id_phone:focus, #id_password1:focus, #id_password2:focus {
+        @apply ring-2 ring-green-500 ring-offset-0 border-green-500;
+    }
 
-        {% if form.errors %}
-            <div class="alert">{{ form.errors }}</div>
-        {% endif %}
+    input[type="text"]:focus, input[type="email"]:focus, input[type="tel"]:focus, input[type="password"]:focus {
+        @apply outline-none;
+    }
 
-        <form method="post" class="form">
-            {% csrf_token %}
-            <p>
-                <label for="id_username">Username</label>
-                {{ form.username }}
-            </p>
-            <p>
-                <label for="id_email">Email</label>
-                {{ form.email }}
-            </p>
-            <p>
-                <label for="id_phone">Phone</label>
-                {{ form.phone }}
-            </p>
-            <p>
-                <label for="id_password1">Password</label>
-                {{ form.password1 }}
-            </p>
-            <p>
-                <label for="id_password2">Confirm Password</label>
-                {{ form.password2 }}
-            </p>
-            <button class="btn primary" type="submit">Create Account</button>
-        </form>
+    input[type="radio"] {
+        @apply cursor-pointer;
+    }
 
-        <div class="divider">already a member?</div>
-        <a class="link" href="{% url 'login' %}">Login to your account</a>
-    </div>
-</section>
+    input[type="checkbox"] {
+        @apply cursor-pointer;
+    }
+</style>
 {% endblock %}

@@ -125,7 +125,7 @@
                             <span class="text-sm font-bold text-green-600">₹{{ amount|floatformat:0 }}</span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                            <div class="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all duration-500" style="width: {% widthratio amount 5000 100 %}%"></div>
+                            <div class="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all duration-500 progress-bar" data-amount="{{ amount }}"></div>
                         </div>
                     </div>
                     {% endfor %}
@@ -190,20 +190,18 @@
 </div>
 
 <script>
+    var earningsDataStr = '{{ monthly_earnings_json|escapejs }}';
+    var earningsData = JSON.parse(earningsDataStr);
+    
     document.addEventListener('DOMContentLoaded', function() {
-        const earningsData = {
-            {% for month, amount in monthly_earnings.items %}
-                '{{ month }}': {{ amount }},
-            {% endfor %}
-        };
 
-        const ctx = document.getElementById('earningsChart').getContext('2d');
+        var ctx = document.getElementById('earningsChart').getContext('2d');
         new Chart(ctx, {
             type: 'line',
             data: {
                 labels: Object.keys(earningsData),
                 datasets: [{
-                    label: 'Monthly Earnings ($)',
+                    label: 'Monthly Earnings (₹)',
                     data: Object.values(earningsData),
                     borderColor: '#22c55e',
                     backgroundColor: 'rgba(34, 197, 94, 0.1)',
@@ -264,6 +262,14 @@
                     }
                 }
             }
+        });
+
+        // Calculate progress bar widths
+        var progressBars = document.querySelectorAll('.progress-bar');
+        progressBars.forEach(function(bar) {
+            var amount = parseFloat(bar.getAttribute('data-amount'));
+            var width = (amount / 5000) * 100;
+            bar.style.width = width + '%';
         });
     });
 </script>

@@ -99,7 +99,7 @@
             {% if cars %}
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {% for car in cars %}
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group animate-slide-up" style="animation-delay: {{ forloop.counter|add:3 }}00ms;">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group" data-animation-delay="{{ forloop.counter|add:3 }}">
                         <!-- Car Image -->
                         <div class="relative h-48 bg-gradient-to-br from-gray-200 to-gray-300 overflow-hidden">
                             {% if car.image %}
@@ -194,4 +194,15 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var cards = document.querySelectorAll('[data-animation-delay]');
+        cards.forEach(function(card) {
+            var delay = card.getAttribute('data-animation-delay');
+            card.style.animation = 'slideUp 0.5s ease-out forwards';
+            card.style.animationDelay = (delay * 100) + 'ms';
+        });
+    });
+</script>
 {% endblock %}

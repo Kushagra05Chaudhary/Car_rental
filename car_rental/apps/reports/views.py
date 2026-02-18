@@ -3,7 +3,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.views.generic import TemplateView, ListView
 from django.utils import timezone
+from django.core import serializers
 from datetime import timedelta
+import json
 from .services import OwnerRevenueService
 from .models import OwnerReport
 
@@ -35,7 +37,9 @@ class OwnerEarningsView(OwnerReportMixin, TemplateView):
         context['summary'] = summary
         
         # Get monthly earnings
-        context['monthly_earnings'] = OwnerRevenueService.get_monthly_earnings(owner, months=6)
+        monthly_earnings = OwnerRevenueService.get_monthly_earnings(owner, months=6)
+        context['monthly_earnings'] = monthly_earnings
+        context['monthly_earnings_json'] = json.dumps(monthly_earnings)
         
         # Get top earning cars
         context['top_cars'] = OwnerRevenueService.get_top_earning_cars(owner, limit=5)
