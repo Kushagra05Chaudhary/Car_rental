@@ -1,28 +1,20 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block content %}
 
-<h2>{{ car.name }}</h2>
+<div class="max-w-5xl mx-auto py-16 px-6">
 
-{% if car.image %}
-    <img src="{{ car.image.url }}" width="400">
-{% endif %}
+    <img src="{{ car.image.url }}" class="rounded-2xl shadow-md mb-6">
 
-<hr>
+    <h1 class="text-4xl font-bold mb-4">{{ car.name }}</h1>
 
-<p><strong>Brand:</strong> {{ car.brand }}</p>
-<p><strong>Type:</strong> {{ car.car_type }}</p>
-<p><strong>Location:</strong> {{ car.location }}</p>
-<p><strong>Seats:</strong> {{ car.seats }}</p>
-<p><strong>Price:</strong> ₹{{ car.price_per_day }} / day</p>
+    <p class="text-gray-500 mb-4">
+        {{ car.brand }} • {{ car.seats }} seats
+    </p>
 
-{% if car.is_available %}
-    <p style="color:green;">Available</p>
-{% else %}
-    <p style="color:red;">Not Available</p>
-{% endif %}
+    <p class="text-indigo-600 text-2xl font-bold mb-6">
+        ₹{{ car.price_per_day }}/day
+    </p>
 
-<a href="{% url 'car_list' %}" class="btn btn-secondary">
-    Back to Cars
-</a>
+</div>
 
 {% endblock %}

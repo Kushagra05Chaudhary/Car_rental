@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- HERO SECTION -->
+<section class="bg-gray-50 py-24">
+    <div class="max-w-6xl mx-auto px-6 text-center">
+        
+        <h1 class="text-5xl font-bold text-slate-800 mb-6 leading-tight">
+            Rent Smarter with <span class="text-indigo-600">Askren</span>
+        </h1>
+
+        <p class="text-lg text-gray-500 mb-10">
+            Premium cars. Seamless booking. Instant approval.
+        </p>
+
+        <div class="flex justify-center gap-4">
+            <a href="#" 
+               class="bg-indigo-600 text-white px-8 py-3 rounded-xl hover:bg-indigo-700 transition shadow-md">
+                Browse Cars
+            </a>
+
+            <a href="{% url 'car_detail' car.id %}">
+                Learn More
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- SEARCH BAR SECTION -->
+<section class="max-w-5xl mx-auto -mt-12 px-6">
+
+    <form method="GET"
+          class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg grid md:grid-cols-4 gap-4">
+
+        <input type="text"
+               name="location"
+               placeholder="Location"
+               class="border border-gray-200 p-3 rounded-xl">
+
+        <input type="date"
+               name="pickup"
+               class="border border-gray-200 p-3 rounded-xl">
+
+        <input type="date"
+               name="return"
+               class="border border-gray-200 p-3 rounded-xl">
+
+        <button class="bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition">
+            Search
+        </button>
+
+    </form>
+
+</section>
+
+
+<!-- FEATURED CARS -->
+{% for car in featured_cars %}
+<div class="bg-white dark:bg-slate-800 rounded-2xl shadow-md hover:shadow-xl transition fade-in overflow-hidden">
+
+    {% if car.image %}
+        <img src="{{ car.image.url }}" class="h-48 w-full object-cover">
+    {% else %}
+        <img src="https://via.placeholder.com/400x300"
+             class="h-48 w-full object-cover">
+    {% endif %}
+
+    <div class="p-6">
+        <h3 class="text-xl font-semibold text-slate-800 mb-2">
+            {{ car.name }}
+        </h3>
+
+        <p class="text-gray-500 dark:text-gray-400">
+            {{ car.brand }} • {{ car.seats }} seats
+        </p>
+
+        <div class="flex justify-between items-center">
+            <span class="text-indigo-600 font-bold text-lg">
+                ₹{{ car.price_per_day }}/day
+            </span>
+
+            <a href="#" 
+               class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                View
+            </a>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}
