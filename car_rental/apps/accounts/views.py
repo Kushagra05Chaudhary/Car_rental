@@ -8,6 +8,7 @@ from django.contrib import messages
 from .forms import RegisterForm
 from .models import CustomUser, OTP
 from .models import OwnerRequest
+from apps.bookings.tasks import send_otp_email
 import random
 
 
@@ -32,12 +33,8 @@ def register_view(request):
             request.session['pending_registration'] = user_data
             request.session['registration_otp'] = otp
 
-            send_mail(
-                'Verify Your Account - OTP',
-                f'Your OTP for account verification is: {otp}',
-                settings.EMAIL_HOST_USER,
-                [user_data['email']],
-            )
+            # Send OTP asynchronously
+            send_otp_email(user_data['email'], otp)
 
             messages.success(request, 'Check your email for the OTP.')
             return redirect('verify_otp')
@@ -97,12 +94,8 @@ def send_otp(request):
         otp = str(random.randint(100000, 999999))
         OTP.objects.create(user=user, code=otp)
 
-        send_mail(
-            'Your OTP Code',
-            f'Your OTP is {otp}',
-            settings.EMAIL_HOST_USER,
-            [user.email],
-        )
+        # Send OTP asynchronously
+        send_otp_email(user.email, otp)
 
         request.session['otp_user'] = user.id
         messages.success(request, 'OTP sent to your email!')

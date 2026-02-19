@@ -1,10 +1,15 @@
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
+from datetime import datetime, timedelta
+
+from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
+from django.http import Http404, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import ListView, DetailView, View
 from django.urls import reverse_lazy
-from django.http import Http404
-from .models import Booking
+from apps.cars.models import Car
+from .models import Booking, BookingHold
 from .services import OwnerBookingService, UserBookingService
 
 
@@ -113,7 +118,7 @@ class OwnerRejectBookingView(OwnerBookingMixin, View):
 class UserBookingListView(LoginRequiredMixin, ListView):
     """User's booking list"""
     model = Booking
-    template_name = 'bookings/user_booking_list.html'
+    template_name = 'bookings/user_booking.html'
     context_object_name = 'bookings'
     login_url = 'login'
     paginate_by = 15
@@ -144,3 +149,66 @@ class UserBookingDetailView(LoginRequiredMixin, DetailView):
     def get_queryset(self):
         """Ensure user can only view their bookings"""
         return Booking.objects.filter(user=self.request.user)
+
+
+@login_required
+def create_booking(request, car_id):
+    car = get_object_or_404(Car, id=car_id, status='approved')
+
+    if request.method == 'POST':
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+
+        try:
+            start = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end = datetime.strptime(end_date, "%Y-%m-%d").date()
+        except (TypeError, ValueError):
+            messages.error(request, 'Please provide valid dates.')
+            return render(request, 'bookings/create_booking.html', {'car': car})
+
+        if end <= start:
+            messages.error(request, 'End date must be after start date.')
+            return render(request, 'bookings/create_booking.html', {'car': car})
+
+        if UserBookingService.has_conflicts(car, start, end, exclude_user=request.user):
+            messages.error(request, 'This car is already reserved for the selected dates.')
+            return render(request, 'bookings/create_booking.html', {'car': car})
+
+        hold_minutes = getattr(settings, 'BOOKING_HOLD_MINUTES', 5)
+        hold = UserBookingService.create_hold(request.user, car, start, end, hold_minutes=hold_minutes)
+
+        return redirect('payment_checkout', hold_id=hold.id)
+
+    return render(request, 'bookings/create_booking.html', {'car': car})
+
+
+def car_booked_dates(request, car_id):
+    """Return booked/held dates for a car as JSON for the availability calendar."""
+    car = get_object_or_404(Car, id=car_id)
+
+    booked_dates = set()
+
+    # Collect dates from active bookings (pending + confirmed)
+    bookings = Booking.objects.filter(
+        car=car,
+        status__in=['pending', 'confirmed'],
+    )
+    for booking in bookings:
+        current = booking.start_date
+        while current <= booking.end_date:
+            booked_dates.add(current.isoformat())
+            current += timedelta(days=1)
+
+    # Collect dates from active holds (not expired)
+    from django.utils import timezone as tz
+    holds = BookingHold.objects.filter(
+        car=car,
+        expires_at__gt=tz.now(),
+    )
+    for hold in holds:
+        current = hold.start_date
+        while current <= hold.end_date:
+            booked_dates.add(current.isoformat())
+            current += timedelta(days=1)
+
+    return JsonResponse({'booked_dates': sorted(booked_dates)})

@@ -1,3 +1,13 @@
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
-# Create your views here.
+from .models import Notification
+
+
+@login_required
+def notification_list(request):
+	notifications = Notification.objects.filter(user=request.user)
+
+	return render(request, 'notifications/list.html', {
+		'notifications': notifications
+	})

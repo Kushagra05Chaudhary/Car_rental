@@ -2,17 +2,54 @@
 
 {% block dashboard_content %}
 
-<h2>Pending Car Approvals</h2>
-
-{% for car in cars %}
-    <div>
-        <p>{{ car.name }} - {{ car.owner.username }}</p>
-
-        <a href="{% url 'approve_car' car.id %}">Approve</a>
-        <a href="{% url 'reject_car' car.id %}">Reject</a>
+<div class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h2 class="text-3xl font-extrabold text-gray-900">Pending Car Approvals</h2>
+        <p class="text-gray-500 mt-1">Review and approve or reject car listings</p>
     </div>
-{% empty %}
-    <p>No pending cars.</p>
-{% endfor %}
+
+    {% if cars %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for car in cars %}
+        <div
+            class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all">
+            {% if car.image %}
+            <img src="{{ car.image.url }}" alt="{{ car.name }}" class="w-full h-40 object-cover">
+            {% else %}
+            <div
+                class="w-full h-40 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-4xl">
+                🚗</div>
+            {% endif %}
+            <div class="p-5">
+                <h3 class="text-lg font-bold text-gray-900 mb-1">{{ car.name }}</h3>
+                <p class="text-sm text-gray-500 mb-1">{{ car.brand }} • {{ car.car_type }}</p>
+                <p class="text-sm text-gray-400 mb-3">Owner: {{ car.owner.username }}</p>
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="text-lg font-extrabold text-green-600">₹{{ car.price_per_day }}</span>
+                    <span class="text-sm text-gray-400">/day</span>
+                </div>
+                <div class="flex gap-2">
+                    <a href="{% url 'approve_car' car.id %}"
+                        class="flex-1 text-center bg-green-600 text-white font-bold py-2 rounded-xl hover:bg-green-700 transition-all text-sm">
+                        ✓ Approve
+                    </a>
+                    <a href="{% url 'reject_car' car.id %}"
+                        class="flex-1 text-center bg-red-600 text-white font-bold py-2 rounded-xl hover:bg-red-700 transition-all text-sm">
+                        ✕ Reject
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+        <div class="text-6xl mb-4">✅</div>
+        <h3 class="text-xl font-bold text-gray-700 mb-2">All caught up!</h3>
+        <p class="text-gray-500">No pending car approvals at this time.</p>
+    </div>
+    {% endif %}
+</div>
 
 {% endblock %}

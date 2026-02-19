@@ -4,149 +4,120 @@
 {% block title %}My Profile - Owner{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-slate-50">
-    <!-- Header -->
-    <div class="bg-gradient-to-r from-orange-600 to-orange-700 text-white px-8 py-8">
-        <div class="max-w-4xl mx-auto">
-            <h1 class="text-3xl font-bold">My Profile</h1>
-            <p class="text-orange-100 mt-1">View and manage your account</p>
-        </div>
-    </div>
+<div class="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-5xl">
+        <div
+            class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 grid grid-cols-1 lg:grid-cols-2">
 
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Profile Card -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-8 animate-slide-up">
-            <div class="flex flex-col md:flex-row items-center md:items-start gap-8 mb-8">
-                <!-- Avatar -->
-                <div class="w-32 h-32 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl flex items-center justify-center text-white text-6xl flex-shrink-0 shadow-lg">
-                    {{ request.user.get_full_name|first|default:"U" }}
-                </div>
-                
-                <!-- Info -->
-                <div class="flex-1 text-center md:text-left">
-                    <h2 class="text-3xl font-bold text-gray-900">{{ request.user.get_full_name|default:request.user.username }}</h2>
-                    <p class="text-gray-600 text-lg mt-1">{{ request.user.email }}</p>
-                    <p class="text-gray-500 text-sm mt-2">
-                        Member since {{ request.user.date_joined|date:"F d, Y" }}
-                    </p>
-                    <div class="mt-4">
-                        <span class="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-bold">
-                            <span class="w-2 h-2 bg-green-600 rounded-full animate-pulse-soft"></span>
-                            Account Active
-                        </span>
+            <!-- LEFT PANEL — Profile Card -->
+            <div
+                class="bg-gradient-to-br from-gray-900 to-gray-800 p-10 lg:p-14 flex flex-col justify-between text-white relative overflow-hidden">
+                <div class="absolute -top-20 -left-20 w-64 h-64 bg-orange-500 rounded-full opacity-10"></div>
+                <div class="absolute -bottom-16 -right-16 w-48 h-48 bg-purple-500 rounded-full opacity-10"></div>
+
+                <div class="relative z-10 flex flex-col items-center text-center">
+                    <!-- Avatar -->
+                    <div
+                        class="w-28 h-28 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl flex items-center justify-center text-white text-5xl font-bold shadow-xl mb-6">
+                        {{ request.user.get_full_name|first|default:"U" }}
+                    </div>
+                    <h1 class="text-3xl font-extrabold mb-1">{{ request.user.get_full_name|default:request.user.username
+                        }}</h1>
+                    <p class="text-gray-400">{{ request.user.email }}</p>
+                    <p class="text-gray-500 text-sm mt-2">Member since {{ request.user.date_joined|date:"F Y" }}</p>
+                    <div
+                        class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-green-500 bg-opacity-20 text-green-400 rounded-full text-sm font-bold">
+                        <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                        Account Active
                     </div>
                 </div>
-            </div>
 
-            <hr class="border-gray-200 my-8">
-
-            <!-- Account Information Grid -->
-            <div>
-                <h3 class="text-lg font-bold text-gray-900 mb-6">Account Information</h3>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
-                        <p class="text-blue-600 text-sm font-semibold uppercase tracking-wide">Email</p>
-                        <p class="text-gray-900 font-bold mt-2 break-all">{{ request.user.email }}</p>
+                <!-- Account Info -->
+                <div class="relative z-10 mt-10 grid grid-cols-2 gap-4">
+                    <div
+                        class="bg-white bg-opacity-10 backdrop-blur rounded-xl p-4 border border-white border-opacity-10">
+                        <div class="text-gray-400 text-xs uppercase tracking-wide">Username</div>
+                        <div class="font-bold mt-1">{{ request.user.username }}</div>
                     </div>
-                    <div class="p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200">
-                        <p class="text-purple-600 text-sm font-semibold uppercase tracking-wide">Username</p>
-                        <p class="text-gray-900 font-bold mt-2">{{ request.user.username }}</p>
-                    </div>
-                    <div class="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
-                        <p class="text-green-600 text-sm font-semibold uppercase tracking-wide">Phone</p>
-                        <p class="text-gray-900 font-bold mt-2">{{ request.user.phone|default:"Not provided" }}</p>
-                    </div>
-                    <div class="p-6 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-200">
-                        <p class="text-orange-600 text-sm font-semibold uppercase tracking-wide">Status</p>
-                        <p class="text-gray-900 font-bold mt-2">Active</p>
+                    <div
+                        class="bg-white bg-opacity-10 backdrop-blur rounded-xl p-4 border border-white border-opacity-10">
+                        <div class="text-gray-400 text-xs uppercase tracking-wide">Phone</div>
+                        <div class="font-bold mt-1">{{ request.user.phone|default:"Not set" }}</div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Documents Section -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-8 animate-slide-up" style="animation-delay: 0.1s;">
-            <h3 class="text-lg font-bold text-gray-900 mb-6">Verification Documents</h3>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Driving License -->
-                <div class="p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-400 transition-all duration-300">
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <p class="text-gray-700 font-bold">🏮 Driving License</p>
-                            <p class="text-sm text-gray-500 mt-1">Your valid driving license</p>
+            <!-- RIGHT PANEL — Details & Actions -->
+            <div class="p-10 lg:p-14 flex flex-col justify-center">
+                <h2 class="text-3xl font-extrabold text-gray-900 mb-6">Account Details</h2>
+
+                <!-- Documents -->
+                <div class="space-y-4 mb-8">
+                    <h3 class="text-lg font-bold text-gray-800">Verification Documents</h3>
+
+                    <div
+                        class="p-4 border-2 border-dashed rounded-xl {% if request.user.driving_license %}border-green-300 bg-green-50{% else %}border-gray-300 bg-gray-50{% endif %}">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="font-bold text-gray-700">🏮 Driving License</p>
+                                <p class="text-sm text-gray-500">Your valid driving license</p>
+                            </div>
+                            {% if request.user.driving_license %}
+                            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">✓
+                                Uploaded</span>
+                            {% else %}
+                            <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold">⚠
+                                Missing</span>
+                            {% endif %}
                         </div>
+                        {% if request.user.driving_license %}
+                        <a href="{{ request.user.driving_license.url }}" target="_blank"
+                            class="text-green-600 hover:text-green-800 text-sm font-semibold mt-2 inline-block">
+                            View Document →
+                        </a>
+                        {% endif %}
                     </div>
-                    {% if request.user.driving_license %}
-                        <div class="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200 mt-4">
-                            <span class="text-2xl">✓</span>
+
+                    <div
+                        class="p-4 border-2 border-dashed rounded-xl {% if request.user.insurance_document %}border-green-300 bg-green-50{% else %}border-gray-300 bg-gray-50{% endif %}">
+                        <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm font-semibold text-green-700">Uploaded</p>
-                                <a href="{{ request.user.driving_license.url }}" target="_blank" class="text-green-600 hover:text-green-900 text-xs font-semibold">
-                                    Download Document →
-                                </a>
+                                <p class="font-bold text-gray-700">📋 Insurance Document</p>
+                                <p class="text-sm text-gray-500">Your insurance certificate</p>
                             </div>
+                            {% if request.user.insurance_document %}
+                            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">✓
+                                Uploaded</span>
+                            {% else %}
+                            <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold">⚠
+                                Missing</span>
+                            {% endif %}
                         </div>
-                    {% else %}
-                        <div class="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200 mt-4">
-                            <span class="text-2xl">⚠</span>
-                            <div>
-                                <p class="text-sm font-semibold text-yellow-700">Not Uploaded</p>
-                                <p class="text-yellow-600 text-xs">Please upload to verify account</p>
-                            </div>
-                        </div>
-                    {% endif %}
+                        {% if request.user.insurance_document %}
+                        <a href="{{ request.user.insurance_document.url }}" target="_blank"
+                            class="text-green-600 hover:text-green-800 text-sm font-semibold mt-2 inline-block">
+                            View Document →
+                        </a>
+                        {% endif %}
+                    </div>
                 </div>
 
-                <!-- Insurance Document -->
-                <div class="p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-green-400 transition-all duration-300">
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <p class="text-gray-700 font-bold">📋 Insurance Document</p>
-                            <p class="text-sm text-gray-500 mt-1">Your insurance certificate</p>
-                        </div>
-                    </div>
-                    {% if request.user.insurance_document %}
-                        <div class="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200 mt-4">
-                            <span class="text-2xl">✓</span>
-                            <div>
-                                <p class="text-sm font-semibold text-green-700">Uploaded</p>
-                                <a href="{{ request.user.insurance_document.url }}" target="_blank" class="text-green-600 hover:text-green-900 text-xs font-semibold">
-                                    Download Document →
-                                </a>
-                            </div>
-                        </div>
-                    {% else %}
-                        <div class="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200 mt-4">
-                            <span class="text-2xl">⚠</span>
-                            <div>
-                                <p class="text-sm font-semibold text-yellow-700">Not Uploaded</p>
-                                <p class="text-yellow-600 text-xs">Please upload to verify account</p>
-                            </div>
-                        </div>
-                    {% endif %}
+                <!-- Actions -->
+                <div class="space-y-3">
+                    <a href="{% url 'owner_profile_edit' %}"
+                        class="w-full flex items-center justify-center bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition-all shadow-lg">
+                        ✏️ Edit Profile
+                    </a>
+                    <a href="{% url 'owner_change_password' %}"
+                        class="w-full flex items-center justify-center border-2 border-gray-300 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-50 transition-all">
+                        🔒 Change Password
+                    </a>
+                    <a href="{% url 'owner_dashboard' %}"
+                        class="text-center text-gray-500 hover:text-gray-700 text-sm font-medium block mt-2">
+                        ← Back to Dashboard
+                    </a>
                 </div>
             </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 animate-slide-up" style="animation-delay: 0.2s;">
-            <a href="{% url 'owner_profile_edit' %}" class="group bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl text-center flex items-center justify-center gap-2 hover:scale-105">
-                <span class="text-2xl group-hover:scale-125 transition-transform">✏️</span>
-                <span>Edit Profile</span>
-            </a>
-            <a href="{% url 'owner_change_password' %}" class="group bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl text-center flex items-center justify-center gap-2 hover:scale-105">
-                <span class="text-2xl group-hover:scale-125 transition-transform">🔒</span>
-                <span>Change Password</span>
-            </a>
-        </div>
-
-        <!-- Back Link -->
-        <div class="mt-8 text-center">
-            <a href="{% url 'owner_dashboard' %}" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-900 font-semibold transition-colors">
-                ← Back to Dashboard
-            </a>
         </div>
     </div>
 </div>

@@ -1,3 +1,4 @@
+from django.db.models import Avg
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -5,6 +6,7 @@ from django.views.generic import ListView, CreateView, UpdateView, DeleteView, D
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 from django.urls import reverse_lazy
 from apps.accounts.decorators import role_required
+from apps.reviews.models import Review
 from .forms import OwnerCarForm
 from .models import Car
 
@@ -25,8 +27,14 @@ def car_detail(request, pk):
         pk=pk,
         status='approved'
     )
+    reviews = Review.objects.filter(car=car).select_related('user').order_by('-created_at')
+    rating_average = reviews.aggregate(avg=Avg('rating'))['avg']
+
     return render(request, 'cars/car_detail.html', {
-        'car': car
+        'car': car,
+        'reviews': reviews,
+        'rating_average': rating_average,
+        'rating_count': reviews.count(),
     })
 
 

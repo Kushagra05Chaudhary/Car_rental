@@ -2,17 +2,67 @@
 
 {% block dashboard_content %}
 
-<h2>User Dashboard</h2>
-<a href="{% url 'car_list' %}" class="btn btn-success">
-    Browse Cars
-</a>
+<div class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Welcome Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white mb-8">
+        <h2 class="text-3xl font-extrabold">Welcome back, {{ user.username }}! 👋</h2>
+        <p class="text-blue-200 mt-1">Here's your quick overview</p>
+    </div>
 
-<p>Welcome {{ user.username }}</p>
-<a href="{% url 'become_owner' %}">Become Owner</a>
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div
+            class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md hover:scale-105 transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm font-medium">My Bookings</p>
+                    <p class="text-4xl font-extrabold text-blue-600 mt-2">{{ my_bookings }}</p>
+                    <p class="text-xs text-gray-400 mt-2">Total rentals</p>
+                </div>
+                <div class="text-5xl opacity-15">📅</div>
+            </div>
+        </div>
 
+        <div
+            class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md hover:scale-105 transition-all duration-300">
+            <a href="{% url 'car_list' %}" class="block">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Browse Cars</p>
+                        <p class="text-lg font-bold text-gray-900 mt-2">Find your ride</p>
+                        <p class="text-xs text-blue-500 mt-2 font-semibold">Explore →</p>
+                    </div>
+                    <div class="text-5xl opacity-15">🚗</div>
+                </div>
+            </a>
+        </div>
 
-<div>
-    <div>My Bookings: {{ my_bookings }}</div>
+        <div
+            class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md hover:scale-105 transition-all duration-300">
+            <a href="{% url 'become_owner' %}" class="block">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Become an Owner</p>
+                        <p class="text-lg font-bold text-gray-900 mt-2">List your car</p>
+                        <p class="text-xs text-green-500 mt-2 font-semibold">Apply →</p>
+                    </div>
+                    <div class="text-5xl opacity-15">💰</div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <a href="{% url 'car_list' %}"
+            class="bg-gray-900 text-white font-bold py-4 px-6 rounded-2xl hover:bg-gray-800 transition-all text-center flex items-center justify-center gap-2 shadow-lg hover:shadow-xl">
+            🔍 Browse Cars
+        </a>
+        <a href="{% url 'become_owner' %}"
+            class="bg-gradient-to-r from-green-600 to-green-700 text-white font-bold py-4 px-6 rounded-2xl hover:from-green-700 hover:to-green-800 transition-all text-center flex items-center justify-center gap-2 shadow-lg hover:shadow-xl">
+            🏢 Become an Owner
+        </a>
+    </div>
 </div>
 
 {% endblock %}

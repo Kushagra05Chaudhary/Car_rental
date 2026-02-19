@@ -1,30 +1,252 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-5">
+<div class="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-5xl">
 
-    <div class="card p-4 shadow-lg rounded-4">
-        <h3>Book {{ car.name }}</h3>
+        {% if messages %}
+        {% for message in messages %}
+        <div class="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl font-medium text-center">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
 
-        <form method="POST">
-            {% csrf_token %}
+        <div
+            class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 grid grid-cols-1 lg:grid-cols-2">
 
-            <div class="mb-3">
-                <label>Start Date</label>
-                <input type="date" name="start_date" class="form-control" required>
+            <!-- LEFT PANEL — Car Info -->
+            <div
+                class="bg-gradient-to-br from-gray-900 to-gray-800 p-10 lg:p-14 flex flex-col justify-between text-white relative overflow-hidden">
+                <div class="absolute -top-20 -left-20 w-64 h-64 bg-blue-500 rounded-full opacity-10"></div>
+                <div class="absolute -bottom-16 -right-16 w-48 h-48 bg-green-500 rounded-full opacity-10"></div>
+
+                <div class="relative z-10">
+                    <p class="text-blue-400 font-bold text-sm tracking-widest uppercase mb-4">Reserve Now</p>
+                    <h1 class="text-4xl lg:text-5xl font-extrabold leading-tight mb-4">
+                        Book {{ car.name }}.
+                    </h1>
+                    <p class="text-gray-400 text-lg leading-relaxed">
+                        {{ car.brand }} • {{ car.car_type }} • {{ car.seats }} seats
+                    </p>
+                </div>
+
+                <!-- Car Stats -->
+                <div class="relative z-10 mt-10 space-y-4">
+                    <div
+                        class="bg-white bg-opacity-10 backdrop-blur rounded-xl p-5 border border-white border-opacity-10">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-gray-400 text-sm">Daily Rate</span>
+                            <span class="text-3xl font-extrabold">₹{{ car.price_per_day }}</span>
+                        </div>
+                        <div class="text-gray-500 text-sm">per day, insurance included</div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div
+                            class="bg-white bg-opacity-10 backdrop-blur rounded-xl p-4 border border-white border-opacity-10">
+                            <div class="text-2xl font-extrabold">📍</div>
+                            <div class="text-sm mt-1">{{ car.location }}</div>
+                        </div>
+                        <div
+                            class="bg-white bg-opacity-10 backdrop-blur rounded-xl p-4 border border-white border-opacity-10">
+                            <div class="text-2xl font-extrabold">🪑</div>
+                            <div class="text-sm mt-1">{{ car.seats }} seats</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3">
+                        <div
+                            class="bg-white bg-opacity-10 backdrop-blur rounded-xl p-3 border border-white border-opacity-10 text-center">
+                            <div class="text-green-400 text-xs font-bold">✓ Insured</div>
+                        </div>
+                        <div
+                            class="bg-white bg-opacity-10 backdrop-blur rounded-xl p-3 border border-white border-opacity-10 text-center">
+                            <div class="text-green-400 text-xs font-bold">✓ 24/7</div>
+                        </div>
+                        <div
+                            class="bg-white bg-opacity-10 backdrop-blur rounded-xl p-3 border border-white border-opacity-10 text-center">
+                            <div class="text-green-400 text-xs font-bold">✓ Free Fuel</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="mb-3">
-                <label>End Date</label>
-                <input type="date" name="end_date" class="form-control" required>
+            <!-- RIGHT PANEL — Booking Form -->
+            <div class="p-10 lg:p-14 flex flex-col justify-center">
+                <h2 class="text-3xl font-extrabold text-gray-900 mb-2">Select Dates</h2>
+                <p class="text-gray-500 mb-6">Pick your rental period. Booked dates are highlighted in red.</p>
+
+                <!-- Flatpickr CDN -->
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/airbnb.css">
+
+                <!-- Calendar Legend -->
+                <div class="flex items-center gap-5 mb-5 text-sm">
+                    <div class="flex items-center gap-2">
+                        <span class="inline-block w-3.5 h-3.5 rounded-full bg-green-400 border border-green-500"></span>
+                        <span class="text-gray-600">Available</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="inline-block w-3.5 h-3.5 rounded-full bg-red-400 border border-red-500"></span>
+                        <span class="text-gray-600">Booked</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="inline-block w-3.5 h-3.5 rounded-full bg-blue-400 border border-blue-500"></span>
+                        <span class="text-gray-600">Selected</span>
+                    </div>
+                </div>
+
+                <form method="POST" class="space-y-5">
+                    {% csrf_token %}
+
+                    <!-- Start Date -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Pickup Date:</label>
+                        <input type="text" id="start_date" name="start_date"
+                            class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base font-medium focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none cursor-pointer bg-white transition"
+                            placeholder="Select pickup date" readonly required>
+                    </div>
+
+                    <!-- End Date -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Drop-off Date:</label>
+                        <input type="text" id="end_date" name="end_date"
+                            class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base font-medium focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none cursor-pointer bg-white transition"
+                            placeholder="Select drop-off date" readonly required>
+                    </div>
+
+                    <!-- Dynamic Price Estimate -->
+                    <div id="price-estimate" class="hidden">
+                        <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-700 font-medium">
+                                    <span id="days-count">0</span> day(s) × ₹{{ car.price_per_day }}
+                                </span>
+                                <span class="text-2xl font-extrabold text-gray-900" id="total-price">₹0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit"
+                        class="w-full bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition-all shadow-lg">
+                        ✓ Confirm Booking →
+                    </button>
+                </form>
+
+                <a href="{% url 'car_detail' car.id %}"
+                    class="mt-3 text-center text-gray-500 hover:text-gray-700 text-sm font-medium block">
+                    ← Back to car details
+                </a>
             </div>
-
-            <button type="submit" class="btn btn-dark w-100 rounded-pill">
-                Confirm Booking
-            </button>
-        </form>
-
+        </div>
     </div>
-
 </div>
+
+<!-- Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<style>
+    .flatpickr-day.booked-date {
+        background: #fee2e2 !important;
+        border-color: #fca5a5 !important;
+        color: #dc2626 !important;
+        text-decoration: line-through;
+        pointer-events: none;
+        opacity: 0.7;
+    }
+
+    .flatpickr-day.booked-date:hover {
+        background: #fecaca !important;
+        cursor: not-allowed !important;
+    }
+
+    .flatpickr-day.selected,
+    .flatpickr-day.startRange,
+    .flatpickr-day.endRange {
+        background: #5c7cfa !important;
+        border-color: #4c6ef5 !important;
+    }
+
+    .flatpickr-day:not(.flatpickr-disabled):not(.booked-date):hover {
+        background: #d1fae5 !important;
+        border-color: #6ee7b7 !important;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const carId = {{ car.id }
+    };
+    const pricePerDay = {{ car.price_per_day }};
+    let bookedDates = [];
+    let startPicker, endPicker;
+
+    fetch(`/bookings/api/booked-dates/${carId}/`)
+        .then(res => res.json())
+        .then(data => {
+            bookedDates = data.booked_dates || [];
+            initPickers();
+        })
+        .catch(() => initPickers());
+
+    function initPickers() {
+        const commonConfig = {
+            dateFormat: "Y-m-d",
+            minDate: "today",
+            disableMobile: true,
+            disable: bookedDates,
+            onDayCreate: function (dObj, dStr, fp, dayElem) {
+                const dateStr = dayElem.dateObj.toISOString().split('T')[0];
+                if (bookedDates.includes(dateStr)) {
+                    dayElem.classList.add('booked-date');
+                    dayElem.setAttribute('title', 'This date is booked');
+                }
+            },
+        };
+
+        startPicker = flatpickr('#start_date', {
+            ...commonConfig,
+            onChange: function (selectedDates) {
+                if (selectedDates.length > 0) {
+                    const nextDay = new Date(selectedDates[0]);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    endPicker.set('minDate', nextDay);
+                    if (endPicker.selectedDates.length > 0 && endPicker.selectedDates[0] <= selectedDates[0]) {
+                        endPicker.clear();
+                    }
+                }
+                updatePriceEstimate();
+            }
+        });
+
+        endPicker = flatpickr('#end_date', {
+            ...commonConfig,
+            onChange: function () { updatePriceEstimate(); }
+        });
+    }
+
+    function updatePriceEstimate() {
+        const startEl = document.getElementById('start_date');
+        const endEl = document.getElementById('end_date');
+        const estimateEl = document.getElementById('price-estimate');
+        const daysEl = document.getElementById('days-count');
+        const totalEl = document.getElementById('total-price');
+
+        if (startEl.value && endEl.value) {
+            const start = new Date(startEl.value);
+            const end = new Date(endEl.value);
+            const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+            if (days > 0) {
+                daysEl.textContent = days;
+                totalEl.textContent = '₹' + (days * pricePerDay).toLocaleString('en-IN');
+                estimateEl.classList.remove('hidden');
+                return;
+            }
+        }
+        estimateEl.classList.add('hidden');
+    }
+});
+</script>
 {% endblock %}

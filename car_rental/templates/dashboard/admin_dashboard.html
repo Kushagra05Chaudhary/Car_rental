@@ -2,37 +2,84 @@
 
 {% block dashboard_content %}
 
-<h2>Admin Dashboard</h2>
-
-<div class="row">
-
-    <div class="card">
-        <h4>Total Users</h4>
-        <p>{{ total_users }}</p>
+<div class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h2 class="text-3xl font-extrabold text-gray-900">Admin Dashboard</h2>
+        <p class="text-gray-500 mt-1">Platform overview and management</p>
     </div>
 
-    <div class="card">
-        <h4>Total Owners</h4>
-        <p>{{ total_owners }}</p>
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div
+            class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md hover:scale-105 transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm font-medium">Total Users</p>
+                    <p class="text-4xl font-extrabold text-gray-900 mt-2">{{ total_users }}</p>
+                    <p class="text-xs text-gray-400 mt-2">Registered accounts</p>
+                </div>
+                <div class="text-5xl opacity-15">👥</div>
+            </div>
+        </div>
+
+        <div
+            class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md hover:scale-105 transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm font-medium">Total Owners</p>
+                    <p class="text-4xl font-extrabold text-blue-600 mt-2">{{ total_owners }}</p>
+                    <p class="text-xs text-gray-400 mt-2">Car listers</p>
+                </div>
+                <div class="text-5xl opacity-15">🏢</div>
+            </div>
+        </div>
+
+        <div
+            class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md hover:scale-105 transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm font-medium">Total Cars</p>
+                    <p class="text-4xl font-extrabold text-green-600 mt-2">{{ total_cars }}</p>
+                    <p class="text-xs text-gray-400 mt-2">On platform</p>
+                </div>
+                <div class="text-5xl opacity-15">🚗</div>
+            </div>
+        </div>
     </div>
 
-    <div class="card">
-        <h4>Total Cars</h4>
-        <p>{{ total_cars }}</p>
-    </div>
+    <!-- Action Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="w-12 h-12 rounded-xl bg-yellow-100 flex items-center justify-center text-2xl">⏳</div>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">Pending Cars</h3>
+                    <p class="text-sm text-gray-500">Cars awaiting approval</p>
+                </div>
+            </div>
+            <p class="text-4xl font-extrabold text-yellow-600 mb-4">{{ pending_cars }}</p>
+            <a href="{% url 'admin_car_approval' %}"
+                class="inline-flex items-center gap-2 bg-gray-900 text-white font-bold py-2.5 px-5 rounded-xl hover:bg-gray-800 transition-all text-sm">
+                ⚡ Review Cars →
+            </a>
+        </div>
 
-    <div class="card">
-        <h4>Pending Cars</h4>
-        <p>{{ pending_cars }}</p>
-        <a href="{% url 'admin_car_approval' %}">Manage</a>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center text-2xl">📋</div>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">Owner Requests</h3>
+                    <p class="text-sm text-gray-500">Users wanting to become owners</p>
+                </div>
+            </div>
+            <p class="text-4xl font-extrabold text-purple-600 mb-4">{{ pending_owner_requests }}</p>
+            <a href="{% url 'admin_owner_requests' %}"
+                class="inline-flex items-center gap-2 bg-gray-900 text-white font-bold py-2.5 px-5 rounded-xl hover:bg-gray-800 transition-all text-sm">
+                ⚡ Review Requests →
+            </a>
+        </div>
     </div>
-
-    <div class="card">
-        <h4>Owner Requests</h4>
-        <p>{{ pending_owner_requests }}</p>
-        <a href="{% url 'admin_owner_requests' %}">Manage</a>
-    </div>
-
 </div>
 
 {% endblock %}

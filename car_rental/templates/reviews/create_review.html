@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-5xl">
+        <div
+            class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 grid grid-cols-1 lg:grid-cols-2">
+
+            <!-- LEFT PANEL — Car Info -->
+            <div
+                class="bg-gradient-to-br from-gray-900 to-gray-800 p-10 lg:p-14 flex flex-col justify-between text-white relative overflow-hidden">
+                <div class="absolute -top-20 -left-20 w-64 h-64 bg-yellow-500 rounded-full opacity-10"></div>
+                <div class="absolute -bottom-16 -right-16 w-48 h-48 bg-purple-500 rounded-full opacity-10"></div>
+
+                <div class="relative z-10">
+                    <p class="text-yellow-400 font-bold text-sm tracking-widest uppercase mb-4">Share Your Experience
+                    </p>
+                    <h1 class="text-4xl lg:text-5xl font-extrabold leading-tight mb-4">
+                        Rate your ride in {{ booking.car.name }}.
+                    </h1>
+                    <p class="text-gray-400 text-lg leading-relaxed">
+                        Your feedback helps other renters make better decisions and helps car owners improve their
+                        service.
+                    </p>
+                </div>
+
+                <!-- Booking Summary -->
+                <div class="relative z-10 mt-10 space-y-4">
+                    <div
+                        class="bg-white bg-opacity-10 backdrop-blur rounded-xl p-5 border border-white border-opacity-10">
+                        <div class="text-gray-400 text-sm mb-1">Your Trip</div>
+                        <div class="font-bold text-lg">{{ booking.car.name }}</div>
+                        <div class="text-gray-400 text-sm mt-1">{{ booking.start_date|date:"M d" }} → {{
+                            booking.end_date|date:"M d, Y" }}</div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div
+                            class="bg-white bg-opacity-10 backdrop-blur rounded-xl p-3 border border-white border-opacity-10 text-center">
+                            <div class="text-xl font-extrabold">⭐</div>
+                            <div class="text-gray-400 text-xs mt-1">Rate 1-5</div>
+                        </div>
+                        <div
+                            class="bg-white bg-opacity-10 backdrop-blur rounded-xl p-3 border border-white border-opacity-10 text-center">
+                            <div class="text-xl font-extrabold">💬</div>
+                            <div class="text-gray-400 text-xs mt-1">Comment</div>
+                        </div>
+                        <div
+                            class="bg-white bg-opacity-10 backdrop-blur rounded-xl p-3 border border-white border-opacity-10 text-center">
+                            <div class="text-xl font-extrabold">🎯</div>
+                            <div class="text-gray-400 text-xs mt-1">Help others</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL — Review Form -->
+            <div class="p-10 lg:p-14 flex flex-col justify-center">
+                <h2 class="text-3xl font-extrabold text-gray-900 mb-2">Write a Review</h2>
+                <p class="text-gray-500 mb-8">How was your experience with this car?</p>
+
+                <form method="POST" class="space-y-6">
+                    {% csrf_token %}
+
+                    <!-- Rating -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Rating (1-5 stars)</label>
+                        {{ form.rating }}
+                    </div>
+
+                    <!-- Comment -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Your Review</label>
+                        {{ form.comment }}
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit"
+                        class="w-full bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition-all shadow-lg">
+                        ⭐ Submit Review →
+                    </button>
+                </form>
+
+                <a href="{% url 'booking_list' %}"
+                    class="mt-4 text-center text-gray-500 hover:text-gray-700 text-sm font-medium">
+                    ← Skip for now
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #id_rating {
+        width: 100%;
+        border: 1.5px solid #d1d5db;
+        border-radius: 0.75rem;
+        padding: 0.65rem 1rem;
+        font-size: 1rem;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    #id_rating:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    #id_comment {
+        width: 100%;
+        border: 1.5px solid #d1d5db;
+        border-radius: 0.75rem;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        min-height: 120px;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        resize: vertical;
+    }
+
+    #id_comment:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+</style>
+{% endblock %}

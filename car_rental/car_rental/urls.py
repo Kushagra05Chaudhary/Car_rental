@@ -29,6 +29,8 @@ urlpatterns = [
     path('bookings/', include('apps.bookings.urls')),
     path('payments/', include('apps.payments.urls')),
     path('reports/', include('apps.reports.urls')),
+    path('notifications/', include('apps.notifications.urls')),
+    path('reviews/', include('apps.reviews.urls')),
     path('', include('apps.core.urls')),
 ]
 

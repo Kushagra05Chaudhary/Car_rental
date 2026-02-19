@@ -66,6 +66,29 @@
         </div>
 
         <!-- Booking Status Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Platform Commission</p>
+                        <p class="text-3xl font-bold text-red-600 mt-2">₹{{ summary.commission_total|floatformat:2 }}</p>
+                    </div>
+                    <span class="text-4xl opacity-20">💼</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Net Earnings</p>
+                        <p class="text-3xl font-bold text-green-600 mt-2">₹{{ summary.net_earnings|floatformat:2 }}</p>
+                    </div>
+                    <span class="text-4xl opacity-20">✅</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Booking Status Overview -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-300">
                 <div class="flex items-center justify-between">

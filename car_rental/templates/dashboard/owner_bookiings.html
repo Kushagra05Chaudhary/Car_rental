@@ -1,56 +1,55 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-5">
-
-    <h2 class="mb-4">Owner Bookings</h2>
+<div class="max-w-6xl mx-auto px-6 py-10">
+    <h2 class="text-2xl font-bold mb-6">Owner Bookings</h2>
 
     {% if bookings %}
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>User</th>
-                    <th>Car</th>
-                    <th>Dates</th>
-                    <th>Total</th>
-                    <th>Status</th>
-                    <th>Payment</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for booking in bookings %}
-                <tr>
-                    <td>{{ booking.user.username }}</td>
-                    <td>{{ booking.car.name }}</td>
-                    <td>
-                        {{ booking.start_date }} -
-                        {{ booking.end_date }}
-                    </td>
-                    <td>₹{{ booking.total_price }}</td>
-                    <td>{{ booking.status }}</td>
-                    <td>{{ booking.payment_status }}</td>
-                    <td>
-                        {% if booking.status == "AWAITING_OWNER_APPROVAL" %}
-                            <a href="{% url 'approve_booking' booking.id %}"
-                               class="btn btn-sm btn-success">
-                                Approve
-                            </a>
-                            <a href="{% url 'reject_booking' booking.id %}"
-                               class="btn btn-sm btn-danger">
-                                Reject
-                            </a>
-                        {% else %}
-                            -
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-4 py-3 text-left font-semibold">User</th>
+                            <th class="px-4 py-3 text-left font-semibold">Car</th>
+                            <th class="px-4 py-3 text-left font-semibold">Dates</th>
+                            <th class="px-4 py-3 text-left font-semibold">Total</th>
+                            <th class="px-4 py-3 text-left font-semibold">Status</th>
+                            <th class="px-4 py-3 text-left font-semibold">Payment</th>
+                            <th class="px-4 py-3 text-left font-semibold">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for booking in bookings %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3">{{ booking.user.username }}</td>
+                            <td class="px-4 py-3">{{ booking.car.name }}</td>
+                            <td class="px-4 py-3">{{ booking.start_date }} - {{ booking.end_date }}</td>
+                            <td class="px-4 py-3">₹{{ booking.total_price }}</td>
+                            <td class="px-4 py-3">{{ booking.status }}</td>
+                            <td class="px-4 py-3">
+                                {% if booking.payment %}
+                                    {{ booking.payment.status }}
+                                {% else %}
+                                    pending
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3">
+                                {% if booking.status == "pending" %}
+                                    <a href="{% url 'accept_booking' booking.id %}" class="btn-primary">Approve</a>
+                                    <a href="{% url 'reject_booking' booking.id %}" class="btn-secondary">Reject</a>
+                                {% else %}
+                                    <span class="text-gray-500">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     {% else %}
-        <p>No bookings yet.</p>
+        <p class="text-gray-500">No bookings yet.</p>
     {% endif %}
-
 </div>
 {% endblock %}

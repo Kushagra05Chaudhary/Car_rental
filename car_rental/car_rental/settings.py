@@ -158,5 +158,8 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 LOGIN_REDIRECT_URL = 'dashboard_redirect'
 LOGOUT_REDIRECT_URL = 'login'
 
+BOOKING_HOLD_MINUTES = 5
+PLATFORM_COMMISSION_RATE = 0.1
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'

@@ -4,6 +4,7 @@ from datetime import timedelta
 from apps.bookings.models import Booking
 from apps.payments.models import Payment
 from apps.cars.models import Car
+from django.conf import settings
 
 
 class OwnerRevenueService:
@@ -92,10 +93,16 @@ class OwnerRevenueService:
             booking__car__in=owner_cars,
             status='pending'
         ).aggregate(Sum('amount'))['amount__sum'] or 0
+
+        commission_rate = getattr(settings, 'PLATFORM_COMMISSION_RATE', 0.1)
+        commission_total = completed_earnings * commission_rate
+        net_earnings = completed_earnings - commission_total
         
         return {
             'total_earnings': float(completed_earnings),
             'pending_earnings': float(pending_payments),
+            'commission_total': float(commission_total),
+            'net_earnings': float(net_earnings),
             'total_bookings': all_bookings.count(),
             'completed_bookings': all_bookings.filter(status='completed').count(),
             'pending_bookings': all_bookings.filter(status='pending').count(),

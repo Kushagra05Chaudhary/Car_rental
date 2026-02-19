@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-5xl">
+        <div
+            class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 grid grid-cols-1 lg:grid-cols-2">
+
+            <!-- LEFT PANEL — Success Graphic -->
+            <div
+                class="bg-gradient-to-br from-gray-900 to-gray-800 p-10 lg:p-14 flex flex-col justify-center items-center text-white relative overflow-hidden">
+                <div class="absolute -top-20 -left-20 w-64 h-64 bg-green-500 rounded-full opacity-10"></div>
+                <div class="absolute -bottom-16 -right-16 w-48 h-48 bg-blue-500 rounded-full opacity-10"></div>
+
+                <div class="relative z-10 text-center">
+                    <div class="text-8xl mb-6">✅</div>
+                    <h1 class="text-4xl lg:text-5xl font-extrabold leading-tight mb-4">Payment Successful!</h1>
+                    <p class="text-gray-400 text-lg">Your booking request has been sent to the car owner for approval.
+                    </p>
+                </div>
+
+                <div class="relative z-10 mt-10 grid grid-cols-2 gap-4 w-full max-w-sm">
+                    <div
+                        class="bg-white bg-opacity-10 backdrop-blur rounded-xl p-4 border border-white border-opacity-10 text-center">
+                        <div class="text-2xl font-extrabold">🚗</div>
+                        <div class="text-gray-400 text-sm mt-1">{{ booking.car.name }}</div>
+                    </div>
+                    <div
+                        class="bg-white bg-opacity-10 backdrop-blur rounded-xl p-4 border border-white border-opacity-10 text-center">
+                        <div class="text-2xl font-extrabold">₹{{ booking.total_price }}</div>
+                        <div class="text-gray-400 text-sm mt-1">Amount paid</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL — Next Steps -->
+            <div class="p-10 lg:p-14 flex flex-col justify-center">
+                <h2 class="text-3xl font-extrabold text-gray-900 mb-2">What's Next?</h2>
+                <p class="text-gray-500 mb-8">Here's what happens after your payment:</p>
+
+                <div class="space-y-5 mb-8">
+                    <div class="flex items-start gap-4">
+                        <div
+                            class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold shrink-0">
+                            1</div>
+                        <div>
+                            <div class="font-bold text-gray-900">Owner Review</div>
+                            <div class="text-gray-500 text-sm">The car owner will review and confirm your booking</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div
+                            class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold shrink-0">
+                            2</div>
+                        <div>
+                            <div class="font-bold text-gray-900">Confirmation Email</div>
+                            <div class="text-gray-500 text-sm">You'll receive an email when your booking is confirmed
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div
+                            class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold shrink-0">
+                            3</div>
+                        <div>
+                            <div class="font-bold text-gray-900">Pick Up</div>
+                            <div class="text-gray-500 text-sm">Show up at the pickup location on your start date</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <a href="{% url 'booking_list' %}"
+                        class="w-full flex items-center justify-center bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition-all shadow-lg">
+                        📋 View My Bookings
+                    </a>
+                    <a href="{% url 'invoice_pdf' booking.id %}"
+                        class="w-full flex items-center justify-center border-2 border-gray-300 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-50 transition-all">
+                        📄 Download Invoice
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
