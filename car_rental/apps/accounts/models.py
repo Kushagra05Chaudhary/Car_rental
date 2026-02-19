@@ -9,9 +9,16 @@ class CustomUser(AbstractUser):
         ('user', 'User'),
     )
 
-    role=models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')
     phone = models.CharField(max_length=15, blank=True, null=True)
     is_email_verified = models.BooleanField(default=False)
+    
+    # Owner specific fields
+    driving_license = models.FileField(upload_to='documents/', blank=True, null=True)
+    insurance_document = models.FileField(upload_to='documents/', blank=True, null=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    
     def __str__(self):
         return self.username
 
