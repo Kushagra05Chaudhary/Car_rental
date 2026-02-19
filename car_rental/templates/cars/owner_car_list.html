@@ -3,6 +3,16 @@
 
 {% block title %}My Cars - Owner Dashboard{% endblock %}
 
+{% block extra_css %}
+<style>
+    {% for car in cars %}
+    .car-card-{{ forloop.counter }} {
+        animation-delay: {{ forloop.counter|add:3 }}00ms;
+    }
+    {% endfor %}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="min-h-screen bg-slate-50">
     <!-- Header Section -->
@@ -103,7 +113,7 @@
             {% if cars %}
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {% for car in cars %}
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group animate-slide-up" style="animation-delay: {{ forloop.counter|add:3 }}00ms;">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group animate-slide-up car-card-{{ forloop.counter }}">
                         <!-- Car Image -->
                         <div class="relative h-48 bg-gradient-to-br from-gray-200 to-gray-300 overflow-hidden">
                             {% if car.image %}
