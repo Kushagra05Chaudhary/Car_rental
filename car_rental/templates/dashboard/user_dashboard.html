@@ -1,12 +1,11 @@
-{% extends 'dashboard/dashboard_base.html' %}
+{% extends 'base.html' %}
 
-{% block dashboard_content %}
-
+{% block content %}
 <div class="max-w-7xl mx-auto px-6 py-8">
     <!-- Welcome Header -->
-    <div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white mb-8">
+    <div class="bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl p-8 text-white mb-8 border border-white/10 shadow-lg">
         <h2 class="text-3xl font-extrabold">Welcome back, {{ user.username }}! 👋</h2>
-        <p class="text-blue-200 mt-1">Here's your quick overview</p>
+        <p class="text-slate-300 mt-1">Here's your quick overview</p>
     </div>
 
     <!-- Stats -->
@@ -16,7 +15,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">My Bookings</p>
-                    <p class="text-4xl font-extrabold text-blue-600 mt-2">{{ my_bookings }}</p>
+                    <p class="text-4xl font-extrabold text-slate-800 mt-2">{{ my_bookings }}</p>
                     <p class="text-xs text-gray-400 mt-2">Total rentals</p>
                 </div>
                 <div class="text-5xl opacity-15">📅</div>
@@ -30,7 +29,7 @@
                     <div>
                         <p class="text-gray-500 text-sm font-medium">Browse Cars</p>
                         <p class="text-lg font-bold text-gray-900 mt-2">Find your ride</p>
-                        <p class="text-xs text-blue-500 mt-2 font-semibold">Explore →</p>
+                        <p class="text-xs text-slate-600 mt-2 font-semibold">Explore →</p>
                     </div>
                     <div class="text-5xl opacity-15">🚗</div>
                 </div>

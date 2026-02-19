@@ -2,11 +2,11 @@
 {% block content %}
 
 <!-- HEADER SECTION -->
-<section class="bg-gradient-to-br from-dark-900 via-dark-800 to-brand-950 py-12 relative overflow-hidden">
+<section class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-12 relative overflow-hidden border-b border-white/10">
     <div class="absolute inset-0 bg-white opacity-[0.02] pattern-grid"></div>
     <div class="max-w-6xl mx-auto px-6 relative z-10">
-        <h1 class="text-4xl md:text-5xl font-bold text-white mb-2">Available Vehicles</h1>
-        <p class="text-gray-400 text-lg">Choose from our premium collection of cars</p>
+        <h1 class="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">Available Vehicles</h1>
+        <p class="text-slate-400 text-lg font-medium">Choose from our premium collection of cars</p>
     </div>
 </section>
 
@@ -107,7 +107,7 @@
                     </div>
 
                     <a href="{% url 'car_detail' car.id %}"
-                        class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-bold">
+                        class="bg-slate-900 border border-slate-800 text-white px-6 py-3 rounded-xl hover:bg-slate-800 transition-all shadow-md hover:shadow-lg font-bold">
                         View Details
                     </a>
                 </div>

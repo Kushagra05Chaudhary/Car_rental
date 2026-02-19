@@ -6,14 +6,18 @@
 {% block content %}
 <div class="min-h-screen bg-slate-50">
     <!-- Header Section -->
-    <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-8">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
+    <div class="bg-gradient-to-r from-slate-800 to-slate-900 text-white px-8 py-8 border-b border-white/10 relative overflow-hidden">
+        <!-- Abstract patterns -->
+        <div class="absolute top-0 right-0 p-12 opacity-10 blur-3xl rounded-full bg-blue-400 mix-blend-multiply filter animate-blob"></div>
+        <div class="absolute -bottom-8 left-20 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-4000"></div>
+
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 relative z-10">
             <div>
-                <h1 class="text-3xl font-bold">My Cars</h1>
-                <p class="text-blue-100 mt-1">Manage your vehicle listings</p>
+                <h1 class="text-3xl font-extrabold tracking-tight">My Cars</h1>
+                <p class="text-slate-300 mt-2 font-medium">Manage your vehicle listings</p>
             </div>
-            <a href="{% url 'owner_add_car' %}" class="group bg-white text-blue-600 font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 flex items-center gap-2">
-                <span class="text-2xl group-hover:scale-125 transition-transform">➕</span>
+            <a href="{% url 'owner_add_car' %}" class="group bg-white text-slate-900 font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 hover:bg-slate-50 flex items-center gap-2">
+                <span class="text-2xl group-hover:scale-125 transition-transform text-slate-700">➕</span>
                 <span>Add New Car</span>
             </a>
         </div>
