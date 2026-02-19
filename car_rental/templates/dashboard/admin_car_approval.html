@@ -1,0 +1,18 @@
+{% extends 'dashboard/dashboard_base.html' %}
+
+{% block dashboard_content %}
+
+<h2>Pending Car Approvals</h2>
+
+{% for car in cars %}
+    <div>
+        <p>{{ car.name }} - {{ car.owner.username }}</p>
+
+        <a href="{% url 'approve_car' car.id %}">Approve</a>
+        <a href="{% url 'reject_car' car.id %}">Reject</a>
+    </div>
+{% empty %}
+    <p>No pending cars.</p>
+{% endfor %}
+
+{% endblock %}

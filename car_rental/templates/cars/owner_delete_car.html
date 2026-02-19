@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Car - {{ object.name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div class="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Warning Card -->
+        <div class="bg-white rounded-lg shadow-sm p-8 text-center">
+            <div class="text-5xl mb-4">⚠️</div>
+            
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">Delete Car</h1>
+            <p class="text-gray-600 mb-6">Are you sure you want to delete this car?</p>
+
+            <!-- Car Details -->
+            <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                {% if object.image %}
+                    <img src="{{ object.image.url }}" alt="{{ object.name }}" class="w-full h-48 object-cover rounded-lg mb-4">
+                {% endif %}
+                <h2 class="text-xl font-bold text-gray-900">{{ object.name }}</h2>
+                <p class="text-gray-600">{{ object.brand }} - {{ object.car_type }}</p>
+                <p class="text-gray-600">{{ object.location }}</p>
+            </div>
+
+            <!-- Warning Message -->
+            <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-red-800 text-sm">
+                    <strong>This action cannot be undone.</strong> All pending and current bookings related to this car will be affected.
+                </p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-4">
+                <form method="POST" class="flex-1">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200">
+                        Yes, Delete Car
+                    </button>
+                </form>
+                <a href="{% url 'owner_car_list' %}" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 text-center">
+                    Cancel
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

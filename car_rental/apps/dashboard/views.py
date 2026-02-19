@@ -1,106 +1,109 @@
-from django.http import HttpResponseForbidden
-from django.shortcuts import redirect, render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from apps.accounts.decorators import role_required
-from apps.accounts.models import CustomUser
+from apps.accounts.models import CustomUser, OwnerRequest
 from apps.cars.models import Car
-from car_rental.apps.bookings.models import Booking
-
-
-# Temporary imports (will work when car/booking models exist)
-# from apps.cars.models import Car
-# from apps.bookings.models import Booking
-
+from apps.bookings.models import Booking
+from .services import DashboardService
 
 @login_required
 @role_required('admin')
 def admin_dashboard(request):
-
+    """Admin dashboard view"""
     context = {
         'total_users': CustomUser.objects.filter(role='user').count(),
         'total_owners': CustomUser.objects.filter(role='owner').count(),
-        'total_cars': 0,  # update when Car model ready
-        'total_bookings': 0,  # update later
+        'total_cars': Car.objects.count(),
+        'pending_cars': Car.objects.filter(status='pending').count(),
+        'pending_owner_requests': OwnerRequest.objects.filter(status='pending').count(),
+        'approved_cars': Car.objects.filter(status='approved').count(),
+        'total_bookings': Booking.objects.count(),
+        'pending_bookings': Booking.objects.filter(status='pending').count(),
+        'completed_bookings': Booking.objects.filter(status='completed').count(),
     }
 
     return render(request, 'dashboard/admin_dashboard.html', context)
 
+@login_required
+@role_required('admin')
+def admin_car_approval(request):
+
+    cars = Car.objects.filter(status='pending')
+
+    return render(request, 'dashboard/admin_car_approval.html', {
+        'cars': cars
+    })
+
+@login_required
+@role_required('admin')
+def approve_car(request, pk):
+    car = Car.objects.get(pk=pk)
+    car.status = 'approved'
+    car.save()
+    return redirect('admin_car_approval')
+
+@login_required
+@role_required('admin')
+def reject_car(request, pk):
+    car = Car.objects.get(pk=pk)
+    car.status = 'rejected'
+    car.save()
+    return redirect('admin_car_approval')
+
+@login_required
+@role_required('admin')
+def admin_owner_requests(request):
+
+    requests = OwnerRequest.objects.filter(status='pending')
+
+    return render(request, 'dashboard/admin_owner_requests.html', {
+        'requests': requests
+    })
+@login_required
+@role_required('admin')
+def approve_owner(request, pk):
+    req = OwnerRequest.objects.get(pk=pk)
+    req.status = 'approved'
+    req.save()
+
+    user = req.user
+    user.role = 'owner'
+    user.save()
+
+    return redirect('admin_owner_requests')
 
 
 @login_required
+@role_required('admin')
+def reject_owner(request, pk):
+    req = OwnerRequest.objects.get(pk=pk)
+    req.status = 'rejected'
+    req.save()
+
+    return redirect('admin_owner_requests')
+    
+@login_required
 @role_required('owner')
 def owner_dashboard(request):
-
-    owner_cars = Car.objects.filter(owner=request.user)
-
-    context = {
-        'owner_cars': owner_cars,
-    }
-
-    return render(request, 'dashboard/owner_dashboard.html', context)
-
+    """Owner dashboard view with comprehensive statistics"""
+    
+    # Get all dashboard data using service
+    dashboard_data = DashboardService.get_owner_dashboard_data(request.user)
+    
+    return render(request, 'dashboard/owner_dashboard.html', dashboard_data)
 
 
 @login_required
 @role_required('user')
 def user_dashboard(request):
-
-    context = {
-        'my_bookings': 0,
-    }
-
-    return render(request, 'dashboard/user_dashboard.html', context)
-
-@login_required
-def owner_bookings(request):
-    if request.user.role != "owner":
-        return HttpResponseForbidden("You are not authorized.")
-
-    bookings = Booking.objects.filter(
-        car__owner=request.user
-    ).order_by("-created_at")
-
-    return render(request, "dashboard/owner_bookings.html", {
-        "bookings": bookings
-    })
-
-@login_required
-def approve_booking(request, booking_id):
-    booking = get_object_or_404(
-        Booking,
-        id=booking_id,
-        car__owner=request.user
-    )
-
-    if request.user.role != "owner":
-        return HttpResponseForbidden("Not authorized.")
-
-    if booking.payment_status != "PAID":
-        return HttpResponseForbidden("Payment required before approval.")
-
-    if booking.status != "AWAITING_OWNER_APPROVAL":
-        return HttpResponseForbidden("Invalid booking state.")
-
-    booking.status = "APPROVED"
-    booking.save()
-
-    return redirect("owner_bookings")
+    """User dashboard view"""
+    user_bookings = Booking.objects.filter(user=request.user)
     
-@login_required
-def reject_booking(request, booking_id):
-    booking = get_object_or_404(
-        Booking,
-        id=booking_id,
-        car__owner=request.user
-    )
-
-    if request.user.role != "owner":
-        return HttpResponseForbidden("Not authorized.")
-
-    if booking.status not in ["PENDING", "AWAITING_OWNER_APPROVAL"]:
-        return HttpResponseForbidden("Cannot reject this booking.")
-
-    booking.status = "REJECTED"
-    booking.save()
-
-    return redirect("owner_bookings")
+    context = {
+        'my_bookings': user_bookings.count(),
+        'active_bookings': user_bookings.filter(status__in=['pending', 'confirmed']).count(),
+        'completed_bookings': user_bookings.filter(status='completed').count(),
+        'recent_bookings': user_bookings.order_by('-created_at')[:5],
+    }
+    
+    return render(request, 'dashboard/user_dashboard.html', context)

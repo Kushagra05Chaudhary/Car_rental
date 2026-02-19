@@ -1,74 +1,146 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
+from django.contrib import messages
+from django.views.generic import ListView, DetailView, View
+from django.urls import reverse_lazy
+from django.http import Http404
 from .models import Booking
-from apps.cars.models import Car
-from django.contrib.auth.decorators import login_required
-from datetime import datetime
+from .services import OwnerBookingService, UserBookingService
 
-@login_required
-def create_booking(request, car_id):
-    car = get_object_or_404(Car, id=car_id, is_status='approved')
 
-    if request.method == 'POST':
-        start_date = request.POST.get('start_date')
-        end_date = request.POST.get('end_date')
+# ============ OWNER VIEWS ============
 
-        start = datetime.strptime(start_date, "%Y-%m-%d")
-        end = datetime.strptime(end_date, "%Y-%m-%d")
+class OwnerBookingMixin(UserPassesTestMixin, LoginRequiredMixin):
+    """Mixin to ensure only owners can access booking management"""
+    login_url = 'login'
+    
+    def test_func(self):
+        """Check if user is owner"""
+        return self.request.user.role == 'owner'
+    
+    def handle_no_permission(self):
+        """Redirect if no permission"""
+        messages.error(self.request, 'You must be an owner to access this page.')
+        return redirect('car_list')
 
-        days = (end - start).days
-        total_price = days * car.price_per_day
 
-        Booking.objects.create(
-            user=request.user,
-            car=car,
-            start_date=start_date,
-            end_date=end_date,
-            total_price=total_price
-        )
+class OwnerBookingListView(OwnerBookingMixin, ListView):
+    """Owner's booking list - shows bookings for their cars"""
+    model = Booking
+    template_name = 'bookings/owner_booking_list.html'
+    context_object_name = 'bookings'
+    paginate_by = 15
+    
+    def get_queryset(self):
+        """Get bookings for owner's cars"""
+        return OwnerBookingService.get_owner_bookings(self.request.user).order_by('-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Add statistics
+        pending = OwnerBookingService.get_pending_bookings(self.request.user)
+        confirmed = OwnerBookingService.get_confirmed_bookings(self.request.user)
+        completed = OwnerBookingService.get_completed_bookings(self.request.user)
+        
+        context['pending_count'] = pending.count()
+        context['confirmed_count'] = confirmed.count()
+        context['completed_count'] = completed.count()
+        context['total_bookings'] = self.get_queryset().count()
+        
+        return context
 
-        return redirect('user_bookings')
 
-    return render(request, 'bookings/create_booking.html', {'car': car})
+class OwnerBookingDetailView(OwnerBookingMixin, DetailView):
+    """View booking details"""
+    model = Booking
+    template_name = 'bookings/owner_booking_detail.html'
+    context_object_name = 'booking'
+    
+    def get_object(self, queryset=None):
+        """Ensure owner can only view bookings of their cars"""
+        booking_id = self.kwargs.get('pk')
+        booking = OwnerBookingService.get_booking_details(booking_id, self.request.user)
+        
+        if not booking:
+            raise Http404("Booking not found")
+        
+        return booking
 
-@login_required
-def user_bookings(request):
-    bookings = Booking.objects.filter(user=request.user).order_by('-created_at')
 
-    return render(request, 'bookings/user_bookings.html', {
-        'bookings': bookings
-    })
-
-# Call full_clean() before saving booking to trigger model validation
-@login_required
-def create_booking(request, car_id):
-    car = get_object_or_404(Car, id=car_id, status='approved')
-
-    if request.method == 'POST':
-        start_date = request.POST.get('start_date')
-        end_date = request.POST.get('end_date')
-
-        start = datetime.strptime(start_date, "%Y-%m-%d")
-        end = datetime.strptime(end_date, "%Y-%m-%d")
-
-        days = (end - start).days
-        total_price = days * car.price_per_day
-
-        booking = Booking(
-            user=request.user,
-            car=car,
-            start_date=start_date,
-            end_date=end_date,
-            total_price=total_price
-        )
-
+class OwnerAcceptBookingView(OwnerBookingMixin, View):
+    """Accept a pending booking"""
+    
+    def post(self, request, pk, *args, **kwargs):
+        booking = get_object_or_404(Booking, id=pk)
+        
+        # Verify owner
+        if booking.car.owner != request.user:
+            messages.error(request, 'You can only accept bookings for your cars.')
+            return redirect('owner_booking_list')
+        
         try:
-            booking.full_clean()  # Trigger model validation
-            booking.save()
-            return redirect('user_bookings')
-        except ValidationError as e:
-            return render(request, 'bookings/create_booking.html', {
-                'car': car,
-                'errors': e.message_dict
-            })
+            OwnerBookingService.accept_booking(booking)
+            messages.success(request, 'Booking accepted successfully!')
+        except ValueError as e:
+            messages.error(request, str(e))
+        
+        return redirect('owner_booking_detail', pk=booking.id)
 
-    return render(request, 'bookings/create_booking.html', {'car': car})
+
+class OwnerRejectBookingView(OwnerBookingMixin, View):
+    """Reject a pending booking"""
+    
+    def post(self, request, pk, *args, **kwargs):
+        booking = get_object_or_404(Booking, id=pk)
+        
+        # Verify owner
+        if booking.car.owner != request.user:
+            messages.error(request, 'You can only reject bookings for your cars.')
+            return redirect('owner_booking_list')
+        
+        try:
+            OwnerBookingService.reject_booking(booking)
+            messages.success(request, 'Booking rejected successfully!')
+        except ValueError as e:
+            messages.error(request, str(e))
+        
+        return redirect('owner_booking_list')
+
+
+# ============ USER VIEWS ============
+
+class UserBookingListView(LoginRequiredMixin, ListView):
+    """User's booking list"""
+    model = Booking
+    template_name = 'bookings/user_booking_list.html'
+    context_object_name = 'bookings'
+    login_url = 'login'
+    paginate_by = 15
+    
+    def get_queryset(self):
+        """Get bookings for current user"""
+        return UserBookingService.get_user_bookings(self.request.user)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user_bookings = UserBookingService.get_user_bookings(self.request.user)
+        
+        context['active_count'] = UserBookingService.get_user_active_bookings(
+            self.request.user
+        ).count()
+        context['total_bookings'] = user_bookings.count()
+        
+        return context
+
+
+class UserBookingDetailView(LoginRequiredMixin, DetailView):
+    """View booking details for user"""
+    model = Booking
+    template_name = 'bookings/user_booking_detail.html'
+    context_object_name = 'booking'
+    login_url = 'login'
+    
+    def get_queryset(self):
+        """Ensure user can only view their bookings"""
+        return Booking.objects.filter(user=self.request.user)

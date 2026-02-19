@@ -1,0 +1,18 @@
+{% extends 'dashboard/dashboard_base.html' %}
+
+{% block dashboard_content %}
+
+<h2>Pending Owner Requests</h2>
+
+{% for req in requests %}
+    <div>
+        <p>{{ req.user.username }}</p>
+
+        <a href="{% url 'approve_owner' req.id %}">Approve</a>
+        <a href="{% url 'reject_owner' req.id %}">Reject</a>
+    </div>
+{% empty %}
+    <p>No pending requests.</p>
+{% endfor %}
+
+{% endblock %}

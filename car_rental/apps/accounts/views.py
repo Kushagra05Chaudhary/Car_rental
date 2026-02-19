@@ -207,3 +207,61 @@ def become_owner(request):
 
     messages.success(request, "Owner request submitted. Wait for admin approval.")
     return redirect('user_dashboard')
+
+
+# ================= OWNER PROFILE =================
+
+@login_required
+def owner_profile_view(request):
+    """View owner profile"""
+    if request.user.role != 'owner':
+        messages.error(request, 'Only owners can access this page.')
+        return redirect('dashboard_redirect')
+    
+    return render(request, 'accounts/owner_profile.html', {'user': request.user})
+
+
+@login_required
+def owner_profile_edit_view(request):
+    """Edit owner profile"""
+    if request.user.role != 'owner':
+        messages.error(request, 'Only owners can access this page.')
+        return redirect('dashboard_redirect')
+    
+    if request.method == 'POST':
+        from .forms import OwnerProfileForm
+        form = OwnerProfileForm(request.POST, request.FILES, instance=request.user)
+        
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('owner_profile')
+    else:
+        from .forms import OwnerProfileForm
+        form = OwnerProfileForm(instance=request.user)
+    
+    return render(request, 'accounts/owner_profile_edit.html', {'form': form})
+
+
+@login_required
+def owner_change_password_view(request):
+    """Change password for owner"""
+    if request.user.role != 'owner':
+        messages.error(request, 'Only owners can access this page.')
+        return redirect('dashboard_redirect')
+    
+    if request.method == 'POST':
+        from .forms import OwnerPasswordChangeForm
+        form = OwnerPasswordChangeForm(request.user, request.POST)
+        
+        if form.is_valid():
+            user = form.save()
+            from django.contrib.auth import update_session_auth_hash
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Password changed successfully!')
+            return redirect('owner_profile')
+    else:
+        from .forms import OwnerPasswordChangeForm
+        form = OwnerPasswordChangeForm(request.user)
+    
+    return render(request, 'accounts/owner_change_password.html', {'form': form})

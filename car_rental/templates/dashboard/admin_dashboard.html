@@ -3,13 +3,36 @@
 {% block dashboard_content %}
 
 <h2>Admin Dashboard</h2>
-<p>Welcome {{ user.username }}</p>
 
-<div>
-    <div>Total Users: {{ total_users }}</div>
-    <div>Total Owners: {{ total_owners }}</div>
-    <div>Total Cars: {{ total_cars }}</div>
-    <div>Total Bookings: {{ total_bookings }}</div>
+<div class="row">
+
+    <div class="card">
+        <h4>Total Users</h4>
+        <p>{{ total_users }}</p>
+    </div>
+
+    <div class="card">
+        <h4>Total Owners</h4>
+        <p>{{ total_owners }}</p>
+    </div>
+
+    <div class="card">
+        <h4>Total Cars</h4>
+        <p>{{ total_cars }}</p>
+    </div>
+
+    <div class="card">
+        <h4>Pending Cars</h4>
+        <p>{{ pending_cars }}</p>
+        <a href="{% url 'admin_car_approval' %}">Manage</a>
+    </div>
+
+    <div class="card">
+        <h4>Owner Requests</h4>
+        <p>{{ pending_owner_requests }}</p>
+        <a href="{% url 'admin_owner_requests' %}">Manage</a>
+    </div>
+
 </div>
 
 {% endblock %}

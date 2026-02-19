@@ -26,17 +26,10 @@ urlpatterns = [
     path('accounts/', include('apps.accounts.urls')),
     path('dashboard/', include('apps.dashboard.urls')),
     path('cars/', include('apps.cars.urls')),
-    path("", include("apps.core.urls")),
-
-    path('dashboard/', include('apps.dashboard.urls')),
-    path('cars/', include('apps.cars.urls')),
-    path("", include("apps.core.urls")),
     path('bookings/', include('apps.bookings.urls')),
     path('payments/', include('apps.payments.urls')),
-    # path('notifications/', include('apps.notifications.urls')),
-    # path('reviews/', include('apps.reviews.urls')),
-    # path('reports/', include('apps.reports.urls')),
-
+    path('reports/', include('apps.reports.urls')),
+    path('', include('apps.core.urls')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
