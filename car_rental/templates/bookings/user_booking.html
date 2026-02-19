@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+
+    <h2 class="mb-4">My Bookings</h2>
+
+    {% if bookings %}
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+                <thead>
+                    <tr>
+                        <th>Car</th>
+                        <th>Dates</th>
+                        <th>Total Price</th>
+                        <th>Status</th>
+                        <th>Payment</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr>
+                        <td>{{ booking.car.name }}</td>
+                        <td>
+                            {{ booking.start_date }} <br>
+                            to <br>
+                            {{ booking.end_date }}
+                        </td>
+                        <td>₹{{ booking.total_price }}</td>
+                        <td>{{ booking.status }}</td>
+                        <td>{{ booking.payment_status }}</td>
+                        <td>
+                            {% if booking.payment_status == "UNPAID" %}
+                                <a href="{% url 'payment_success' booking.id %}"
+                                   class="btn btn-sm btn-dark">
+                                    Pay
+                                </a>
+                            {% else %}
+                                <span class="badge bg-success">Paid</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>You have no bookings yet.</p>
+    {% endif %}
+
+</div>
+{% endblock %}

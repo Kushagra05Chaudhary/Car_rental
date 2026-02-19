@@ -40,6 +40,7 @@ def car_list(request):
 #         'car': car
 #     })
 
-def car_detail(request, id):
-    car = Car.objects.get(id=id)
+def car_detail(request, pk):
+    #car = Car.objects.get(id=id)
+    car = get_object_or_404(Car, pk=pk, status='approved')
     return render(request, "cars/car_detail.html", {"car": car})

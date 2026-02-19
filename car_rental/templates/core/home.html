@@ -14,12 +14,12 @@
         </p>
 
         <div class="flex justify-center gap-4">
-            <a href="#" 
+            <a href="{% url 'car_list' %}"
                class="bg-indigo-600 text-white px-8 py-3 rounded-xl hover:bg-indigo-700 transition shadow-md">
                 Browse Cars
             </a>
 
-            <a href="{% url 'car_detail' car.id %}">
+            <a href="{% url 'car_list' %}">
                 Learn More
             </a>
         </div>
@@ -79,8 +79,8 @@
                 ₹{{ car.price_per_day }}/day
             </span>
 
-            <a href="#" 
-               class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                <a href="{% url 'car_detail' car.pk %}"
+                    class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
                 View
             </a>
         </div>

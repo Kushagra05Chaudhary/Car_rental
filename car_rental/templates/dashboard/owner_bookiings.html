@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+
+    <h2 class="mb-4">Owner Bookings</h2>
+
+    {% if bookings %}
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Car</th>
+                    <th>Dates</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Payment</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in bookings %}
+                <tr>
+                    <td>{{ booking.user.username }}</td>
+                    <td>{{ booking.car.name }}</td>
+                    <td>
+                        {{ booking.start_date }} -
+                        {{ booking.end_date }}
+                    </td>
+                    <td>₹{{ booking.total_price }}</td>
+                    <td>{{ booking.status }}</td>
+                    <td>{{ booking.payment_status }}</td>
+                    <td>
+                        {% if booking.status == "AWAITING_OWNER_APPROVAL" %}
+                            <a href="{% url 'approve_booking' booking.id %}"
+                               class="btn btn-sm btn-success">
+                                Approve
+                            </a>
+                            <a href="{% url 'reject_booking' booking.id %}"
+                               class="btn btn-sm btn-danger">
+                                Reject
+                            </a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No bookings yet.</p>
+    {% endif %}
+
+</div>
+{% endblock %}

@@ -5,16 +5,22 @@
 
     <img src="{{ car.image.url }}" class="rounded-2xl shadow-md mb-6">
 
-    <h1 class="text-4xl font-bold mb-4">{{ car.name }}</h1>
-
+    <h1 class="text-4xl font-bold mb-4">{{ car.name }}</h1> 
+    
     <p class="text-gray-500 mb-4">
         {{ car.brand }} • {{ car.seats }} seats
     </p>
-
+    
     <p class="text-indigo-600 text-2xl font-bold mb-6">
         ₹{{ car.price_per_day }}/day
     </p>
-
+    
+    {% if car.is_approved %}
+        <a href="{% url 'create_booking' car.id %}" class="btn btn-primary">
+            Book Now
+        </a>
+    {% endif %}
+    
 </div>
 
 {% endblock %}

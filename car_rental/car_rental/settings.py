@@ -50,6 +50,12 @@ INSTALLED_APPS = [
     'apps.accounts',
     'apps.cars',
     'apps.core',
+    'apps.bookings',
+    'apps.payments',
+    'apps.dashboard',
+    'apps.notifications',
+    'apps.reviews',
+    'apps.reports',
     
 ]
 
