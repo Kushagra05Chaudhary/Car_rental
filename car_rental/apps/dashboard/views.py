@@ -1,87 +1,61 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+from django.views.generic import TemplateView
 from apps.accounts.decorators import role_required
-from apps.accounts.models import CustomUser, OwnerRequest
-from apps.cars.models import Car
 from apps.bookings.models import Booking
-from apps.payments.models import Payment
-from .services import DashboardService
+from .services import DashboardService, AdminDashboardService
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(role_required('admin'), name='dispatch')
+class AdminDashboardView(TemplateView):
+    template_name = 'dashboard/admin_dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        stats = AdminDashboardService.get_dashboard_stats()
+        context.update(stats)
+        context['revenue_chart'] = AdminDashboardService.get_monthly_revenue_chart()
+        context['booking_status_chart'] = AdminDashboardService.get_booking_status_chart()
+        context['recent_activities'] = AdminDashboardService.get_recent_activities()
+        return context
 
 @login_required
 @role_required('admin')
 def admin_dashboard(request):
-    """Admin dashboard view"""
-    context = {
-        'total_users': CustomUser.objects.filter(role='user').count(),
-        'total_owners': CustomUser.objects.filter(role='owner').count(),
-        'total_cars': Car.objects.count(),
-        'pending_cars': Car.objects.filter(status='pending').count(),
-        'pending_owner_requests': OwnerRequest.objects.filter(status='pending').count(),
-        'approved_cars': Car.objects.filter(status='approved').count(),
-        'total_bookings': Booking.objects.count(),
-        'pending_bookings': Booking.objects.filter(status='pending').count(),
-        'completed_bookings': Booking.objects.filter(status='completed').count(),
-    }
-
-    return render(request, 'dashboard/admin_dashboard.html', context)
+    """Backward-compatible endpoint for existing function-based route."""
+    return AdminDashboardView.as_view()(request)
 
 @login_required
 @role_required('admin')
 def admin_car_approval(request):
-
-    cars = Car.objects.filter(status='pending')
-
-    return render(request, 'dashboard/admin_car_approval.html', {
-        'cars': cars
-    })
+    return redirect('admin_car_list')
 
 @login_required
 @role_required('admin')
 def approve_car(request, pk):
-    car = Car.objects.get(pk=pk)
-    car.status = 'approved'
-    car.save()
-    return redirect('admin_car_approval')
+    return redirect('admin_car_list')
 
 @login_required
 @role_required('admin')
 def reject_car(request, pk):
-    car = Car.objects.get(pk=pk)
-    car.status = 'rejected'
-    car.save()
-    return redirect('admin_car_approval')
+    return redirect('admin_car_list')
 
 @login_required
 @role_required('admin')
 def admin_owner_requests(request):
-
-    requests = OwnerRequest.objects.filter(status='pending')
-
-    return render(request, 'dashboard/admin_owner_requests.html', {
-        'requests': requests
-    })
+    return redirect('admin_owner_management')
 @login_required
 @role_required('admin')
 def approve_owner(request, pk):
-    req = OwnerRequest.objects.get(pk=pk)
-    req.status = 'approved'
-    req.save()
-
-    user = req.user
-    user.role = 'owner'
-    user.save()
-
-    return redirect('admin_owner_requests')
+    return redirect('admin_owner_management')
 
 
 @login_required
 @role_required('admin')
 def reject_owner(request, pk):
-    req = OwnerRequest.objects.get(pk=pk)
-    req.status = 'rejected'
-    req.save()
-
-    return redirect('admin_owner_requests')
+    return redirect('admin_owner_management')
     
 @login_required
 @role_required('owner')

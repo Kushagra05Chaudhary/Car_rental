@@ -1,0 +1,104 @@
+{% extends 'dashboard/dashboard_base.html' %}
+
+{% block dashboard_content %}
+<section class="space-y-6">
+    <div class="flex flex-wrap justify-between items-start gap-4">
+        <div>
+            <h1 class="text-2xl font-semibold text-slate-900">Payment Monitoring</h1>
+            <p class="text-slate-500 text-sm mt-1">Track transactions, failures, refunds, and revenue performance.</p>
+        </div>
+        <form method="get" class="flex gap-2 flex-wrap">
+            <select name="status" class="px-3 py-2 rounded-lg border border-slate-200">
+                <option value="">All Status</option>
+                <option value="completed" {% if filters.status == 'completed' %}selected{% endif %}>Completed</option>
+                <option value="failed" {% if filters.status == 'failed' %}selected{% endif %}>Failed</option>
+                <option value="refunded" {% if filters.status == 'refunded' %}selected{% endif %}>Refunded</option>
+                <option value="pending" {% if filters.status == 'pending' %}selected{% endif %}>Pending</option>
+            </select>
+            <button class="px-4 py-2 rounded-lg bg-slate-900 text-white">Filter</button>
+        </form>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <article class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm"><p class="text-xs text-slate-500">Transactions</p><p class="text-2xl font-semibold">{{ summary.total_transactions }}</p></article>
+        <article class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm"><p class="text-xs text-slate-500">Failed</p><p class="text-2xl font-semibold text-red-600">{{ summary.failed_transactions }}</p></article>
+        <article class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm"><p class="text-xs text-slate-500">Refunded</p><p class="text-2xl font-semibold text-blue-600">{{ summary.refunded_transactions }}</p></article>
+        <article class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm"><p class="text-xs text-slate-500">Total Revenue</p><p class="text-2xl font-semibold text-green-600">₹{{ summary.total_revenue|floatformat:2 }}</p></article>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
+            <h2 class="text-sm font-semibold text-slate-700 mb-3">Revenue Trend</h2>
+            <canvas id="paymentRevenueChart" height="110"></canvas>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
+            <h2 class="text-sm font-semibold text-slate-700 mb-3">Transaction Mix</h2>
+            <canvas id="paymentStatusChart" height="110"></canvas>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-x-auto">
+        <table class="min-w-full text-sm">
+            <thead class="bg-slate-50 text-slate-500">
+                <tr>
+                    <th class="text-left px-4 py-3">Transaction</th>
+                    <th class="text-left px-4 py-3">User</th>
+                    <th class="text-left px-4 py-3">Booking</th>
+                    <th class="text-left px-4 py-3">Amount</th>
+                    <th class="text-left px-4 py-3">Status</th>
+                    <th class="text-left px-4 py-3">Date</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for payment in payments %}
+                <tr class="hover:bg-slate-50">
+                    <td class="px-4 py-3">{{ payment.transaction_id|default:'N/A' }}</td>
+                    <td class="px-4 py-3">{{ payment.user.username }}</td>
+                    <td class="px-4 py-3">#{{ payment.booking_id }}</td>
+                    <td class="px-4 py-3">₹{{ payment.amount }}</td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 rounded-full text-xs
+                            {% if payment.status == 'completed' %}bg-green-100 text-green-700
+                            {% elif payment.status == 'failed' %}bg-red-100 text-red-700
+                            {% elif payment.status == 'refunded' %}bg-blue-100 text-blue-700
+                            {% else %}bg-amber-100 text-amber-700{% endif %}">
+                            {{ payment.status|title }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-slate-500">{{ payment.created_at|date:'M d, Y H:i' }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="px-4 py-10 text-center text-slate-500">No transactions found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+{{ revenue_chart.labels|json_script:"payment-revenue-labels" }}
+{{ revenue_chart.data|json_script:"payment-revenue-data" }}
+{{ status_chart.labels|json_script:"payment-status-labels" }}
+{{ status_chart.data|json_script:"payment-status-data" }}
+
+<script>
+    const payLabels = JSON.parse(document.getElementById('payment-revenue-labels').textContent);
+    const payData = JSON.parse(document.getElementById('payment-revenue-data').textContent);
+    const statusLabels = JSON.parse(document.getElementById('payment-status-labels').textContent);
+    const statusData = JSON.parse(document.getElementById('payment-status-data').textContent);
+
+    if (document.getElementById('paymentRevenueChart')) {
+        new Chart(document.getElementById('paymentRevenueChart'), {
+            type: 'line',
+            data: { labels: payLabels, datasets: [{ data: payData, borderColor: '#16a34a', tension: 0.35 }] },
+            options: { plugins: { legend: { display: false } } }
+        });
+    }
+
+    if (document.getElementById('paymentStatusChart')) {
+        new Chart(document.getElementById('paymentStatusChart'), {
+            type: 'doughnut',
+            data: { labels: statusLabels, datasets: [{ data: statusData, backgroundColor: ['#22c55e', '#ef4444', '#3b82f6', '#f59e0b'] }] }
+        });
+    }
+</script>
+{% endblock %}

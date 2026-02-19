@@ -1,11 +1,15 @@
 from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 from django.contrib import messages
 from django.views.generic import ListView, DetailView, View
 from django.urls import reverse_lazy
 from django.http import Http404
+from django.utils.decorators import method_decorator
+from apps.accounts.decorators import role_required
 from .models import Booking
-from .services import OwnerBookingService, UserBookingService
+from .services import OwnerBookingService, UserBookingService, AdminBookingService
+from apps.payments.services import PaymentAdminService
 
 
 # ============ OWNER VIEWS ============
@@ -144,4 +148,67 @@ class UserBookingDetailView(LoginRequiredMixin, DetailView):
     def get_queryset(self):
         """Ensure user can only view their bookings"""
         return Booking.objects.filter(user=self.request.user)
+
+
+@method_decorator(role_required('admin'), name='dispatch')
+class AdminBookingListView(LoginRequiredMixin, ListView):
+    model = Booking
+    template_name = 'bookings/admin_booking_list.html'
+    context_object_name = 'bookings'
+    paginate_by = 20
+    login_url = 'login'
+
+    def get_queryset(self):
+        return AdminBookingService.get_bookings(
+            status=self.request.GET.get('status') or None,
+            start_date=self.request.GET.get('start_date') or None,
+            end_date=self.request.GET.get('end_date') or None,
+            query=self.request.GET.get('q') or None,
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['filters'] = {
+            'status': self.request.GET.get('status', ''),
+            'start_date': self.request.GET.get('start_date', ''),
+            'end_date': self.request.GET.get('end_date', ''),
+            'q': self.request.GET.get('q', ''),
+        }
+        return context
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(role_required('admin'), name='dispatch')
+class AdminCancelBookingView(View):
+    def post(self, request, pk, *args, **kwargs):
+        booking = get_object_or_404(Booking, pk=pk)
+        try:
+            AdminBookingService.cancel_booking(booking)
+            messages.success(request, 'Booking has been cancelled.')
+        except ValueError as exc:
+            messages.error(request, str(exc))
+        return redirect('admin_booking_list')
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(role_required('admin'), name='dispatch')
+class AdminRefundBookingView(View):
+    def post(self, request, pk, *args, **kwargs):
+        booking = get_object_or_404(Booking.objects.select_related('payment'), pk=pk)
+
+        if not hasattr(booking, 'payment'):
+            messages.error(request, 'No payment record found for this booking.')
+            return redirect('admin_booking_list')
+
+        if not AdminBookingService.can_refund(booking):
+            messages.error(request, 'This booking is not eligible for refund.')
+            return redirect('admin_booking_list')
+
+        try:
+            PaymentAdminService.refund_payment(booking.payment)
+            messages.success(request, 'Payment refunded successfully.')
+        except ValueError as exc:
+            messages.error(request, str(exc))
+
+        return redirect('admin_booking_list')
 

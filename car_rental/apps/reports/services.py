@@ -1,6 +1,8 @@
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
 from datetime import timedelta
+from django.db.models.functions import TruncMonth
+from apps.accounts.models import CustomUser
 from apps.bookings.models import Booking
 from apps.payments.models import Payment
 from apps.cars.models import Car
@@ -118,3 +120,69 @@ class OwnerRevenueService:
         ).order_by('-total_earned')[:limit]
         
         return top_cars
+
+
+class AdminReportService:
+    """Service layer for admin-level reports and analytics."""
+
+    @staticmethod
+    def get_summary(start_date=None, end_date=None):
+        payments = Payment.objects.filter(status='completed')
+        bookings = Booking.objects.all()
+
+        if start_date:
+            payments = payments.filter(created_at__date__gte=start_date)
+            bookings = bookings.filter(created_at__date__gte=start_date)
+        if end_date:
+            payments = payments.filter(created_at__date__lte=end_date)
+            bookings = bookings.filter(created_at__date__lte=end_date)
+
+        return {
+            'revenue': payments.aggregate(total=Sum('amount'))['total'] or 0,
+            'bookings': bookings.count(),
+            'completed_bookings': bookings.filter(status='completed').count(),
+            'active_owners': CustomUser.objects.filter(role='owner').count(),
+        }
+
+    @staticmethod
+    def get_booking_trends(start_date=None, end_date=None):
+        bookings = Booking.objects.all()
+        if start_date:
+            bookings = bookings.filter(created_at__date__gte=start_date)
+        if end_date:
+            bookings = bookings.filter(created_at__date__lte=end_date)
+
+        data = bookings.annotate(month=TruncMonth('created_at')).values('month').annotate(total=Count('id')).order_by('month')
+        return {
+            'labels': [item['month'].strftime('%b %Y') for item in data],
+            'data': [item['total'] for item in data],
+        }
+
+    @staticmethod
+    def get_owner_performance(limit=10):
+        return (
+            CustomUser.objects.filter(role='owner')
+            .annotate(
+                total_cars=Count('car', distinct=True),
+                total_bookings=Count('car__bookings', distinct=True),
+                total_revenue=Sum(
+                    'car__bookings__payment__amount',
+                    filter=Q(car__bookings__payment__status='completed')
+                ),
+            )
+            .order_by('-total_revenue')[:limit]
+        )
+
+    @staticmethod
+    def get_top_performing_cars(limit=10):
+        return (
+            Car.objects.select_related('owner')
+            .annotate(
+                total_bookings=Count('bookings', distinct=True),
+                total_revenue=Sum(
+                    'bookings__payment__amount',
+                    filter=Q(bookings__payment__status='completed')
+                ),
+            )
+            .order_by('-total_revenue')[:limit]
+        )

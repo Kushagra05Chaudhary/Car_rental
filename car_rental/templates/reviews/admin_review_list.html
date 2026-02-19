@@ -1,0 +1,57 @@
+{% extends 'dashboard/dashboard_base.html' %}
+
+{% block dashboard_content %}
+<section class="space-y-6">
+    <div class="flex flex-wrap justify-between gap-4 items-start">
+        <div>
+            <h1 class="text-2xl font-semibold text-slate-900">Review Moderation</h1>
+            <p class="text-slate-500 text-sm mt-1">Manage customer reviews and remove inappropriate content.</p>
+        </div>
+        <form method="get" class="flex gap-2">
+            <select name="rating" class="px-3 py-2 rounded-lg border border-slate-200">
+                <option value="">All Ratings</option>
+                <option value="5" {% if rating_filter == '5' %}selected{% endif %}>5 Stars</option>
+                <option value="4" {% if rating_filter == '4' %}selected{% endif %}>4 Stars</option>
+                <option value="3" {% if rating_filter == '3' %}selected{% endif %}>3 Stars</option>
+                <option value="2" {% if rating_filter == '2' %}selected{% endif %}>2 Stars</option>
+                <option value="1" {% if rating_filter == '1' %}selected{% endif %}>1 Star</option>
+            </select>
+            <button class="px-4 py-2 rounded-lg bg-slate-900 text-white">Filter</button>
+        </form>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-x-auto">
+        <table class="min-w-full text-sm">
+            <thead class="bg-slate-50 text-slate-500">
+                <tr>
+                    <th class="text-left px-4 py-3">User</th>
+                    <th class="text-left px-4 py-3">Car</th>
+                    <th class="text-left px-4 py-3">Rating</th>
+                    <th class="text-left px-4 py-3">Comment</th>
+                    <th class="text-left px-4 py-3">Created</th>
+                    <th class="text-left px-4 py-3">Action</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for review in reviews %}
+                <tr class="hover:bg-slate-50">
+                    <td class="px-4 py-3">{{ review.user.username }}</td>
+                    <td class="px-4 py-3">{{ review.car.name }}</td>
+                    <td class="px-4 py-3">{{ review.rating }}/5</td>
+                    <td class="px-4 py-3">{{ review.comment|default:'-' }}</td>
+                    <td class="px-4 py-3 text-slate-500">{{ review.created_at|date:'M d, Y' }}</td>
+                    <td class="px-4 py-3">
+                        <form method="post" action="{% url 'admin_delete_review' review.id %}">
+                            {% csrf_token %}
+                            <button class="px-3 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="px-4 py-10 text-center text-slate-500">No reviews found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

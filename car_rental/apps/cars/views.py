@@ -1,12 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView, View, TemplateView
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 from django.urls import reverse_lazy
+from django.utils.decorators import method_decorator
 from apps.accounts.decorators import role_required
 from .forms import OwnerCarForm
 from .models import Car
+from .services import AdminCarModerationService
 
 
 # ============ PUBLIC VIEWS ============
@@ -143,3 +145,61 @@ class OwnerCarToggleAvailabilityView(OwnerCarMixin, UpdateView):
     
     def get_success_url(self):
         return reverse_lazy('owner_car_list')
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(role_required('admin'), name='dispatch')
+class AdminCarListView(TemplateView):
+    template_name = 'cars/admin_car_list.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        owner_id = self.request.GET.get('owner')
+        availability = self.request.GET.get('availability')
+        query = self.request.GET.get('q')
+
+        cars = AdminCarModerationService.get_cars(owner_id=owner_id, availability=availability, query=query)
+        context['cars'] = cars
+        context['owners'] = cars.values('owner__id', 'owner__username').distinct().order_by('owner__username')
+        context['filters'] = {
+            'owner': owner_id or '',
+            'availability': availability or '',
+            'q': query or '',
+        }
+        return context
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(role_required('admin'), name='dispatch')
+class AdminCarAvailabilityToggleView(View):
+    def post(self, request, pk, *args, **kwargs):
+        car = get_object_or_404(Car, pk=pk)
+        AdminCarModerationService.toggle_availability(car)
+        messages.success(request, f'{car.name} availability updated.')
+        return redirect('admin_car_list')
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(role_required('admin'), name='dispatch')
+class AdminCarFeatureToggleView(View):
+    def post(self, request, pk, *args, **kwargs):
+        car = get_object_or_404(Car, pk=pk)
+        AdminCarModerationService.toggle_featured(car)
+        messages.success(request, f'{car.name} featured status updated.')
+        return redirect('admin_car_list')
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(role_required('admin'), name='dispatch')
+class AdminCarBulkActionView(View):
+    def post(self, request, *args, **kwargs):
+        car_ids = request.POST.getlist('car_ids')
+        action = request.POST.get('action')
+        queryset = Car.objects.filter(id__in=car_ids)
+        updated = AdminCarModerationService.bulk_update(queryset, action)
+
+        if updated:
+            messages.success(request, f'Bulk action applied to {updated} car(s).')
+        else:
+            messages.warning(request, 'No cars were updated.')
+        return redirect('admin_car_list')

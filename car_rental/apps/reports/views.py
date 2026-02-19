@@ -4,7 +4,9 @@ from django.contrib import messages
 from django.views.generic import TemplateView, ListView
 from django.utils import timezone
 from datetime import timedelta
-from .services import OwnerRevenueService
+from django.utils.decorators import method_decorator
+from apps.accounts.decorators import role_required
+from .services import OwnerRevenueService, AdminReportService
 from .models import OwnerReport
 
 
@@ -79,3 +81,21 @@ class OwnerReportListView(OwnerReportMixin, ListView):
     def get_queryset(self):
         """Get only reports for current owner"""
         return OwnerReport.objects.filter(owner=self.request.user).order_by('-generated_at')
+
+
+@method_decorator(role_required('admin'), name='dispatch')
+class AdminReportsView(LoginRequiredMixin, TemplateView):
+    template_name = 'reports/admin_reports.html'
+    login_url = 'login'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        start_date = self.request.GET.get('start_date') or None
+        end_date = self.request.GET.get('end_date') or None
+
+        context['summary'] = AdminReportService.get_summary(start_date=start_date, end_date=end_date)
+        context['booking_trends'] = AdminReportService.get_booking_trends(start_date=start_date, end_date=end_date)
+        context['owner_performance'] = AdminReportService.get_owner_performance(limit=10)
+        context['top_cars'] = AdminReportService.get_top_performing_cars(limit=10)
+        context['filters'] = {'start_date': start_date or '', 'end_date': end_date or ''}
+        return context

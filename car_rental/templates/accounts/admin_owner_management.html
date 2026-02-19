@@ -1,0 +1,136 @@
+{% extends 'dashboard/dashboard_base.html' %}
+
+{% block dashboard_content %}
+<section class="space-y-6" x-data="{ activeRejectId: null, activeDocId: null }">
+    <div class="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+            <h1 class="text-2xl font-semibold text-slate-900">Owner Approval Management</h1>
+            <p class="text-slate-500 text-sm mt-1">Review pending owner requests and verify submitted documents.</p>
+        </div>
+        <div class="flex gap-3">
+            <div class="bg-amber-50 border border-amber-200 text-amber-700 rounded-xl px-4 py-2 text-sm">Pending: {{ pending_count }}</div>
+            <div class="bg-green-50 border border-green-200 text-green-700 rounded-xl px-4 py-2 text-sm">Approved: {{ approved_count }}</div>
+            <div class="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-2 text-sm">Rejected: {{ rejected_count }}</div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+        <table class="min-w-full text-sm">
+            <thead class="bg-slate-50 text-slate-500">
+                <tr>
+                    <th class="text-left px-4 py-3">Owner</th>
+                    <th class="text-left px-4 py-3">Email</th>
+                    <th class="text-left px-4 py-3">Phone</th>
+                    <th class="text-left px-4 py-3">Status</th>
+                    <th class="text-left px-4 py-3">Documents</th>
+                    <th class="text-left px-4 py-3">Action</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for item in pending_requests %}
+                <tr class="hover:bg-slate-50">
+                    <td class="px-4 py-3 font-medium">{{ item.user.username }}</td>
+                    <td class="px-4 py-3">{{ item.user.email }}</td>
+                    <td class="px-4 py-3">{{ item.user.phone|default:'-' }}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs bg-amber-50 text-amber-700 border border-amber-200">Pending</span></td>
+                    <td class="px-4 py-3">
+                        <button @click="activeDocId = {{ item.id }}" class="text-blue-600 hover:underline">Preview</button>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="flex gap-2">
+                            <form method="post" action="{% url 'admin_approve_owner' item.id %}">
+                                {% csrf_token %}
+                                <button class="px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700">Approve</button>
+                            </form>
+                            <button @click="activeRejectId = {{ item.id }}" class="px-3 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700">Reject</button>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr x-show="activeDocId === {{ item.id }}" style="display:none;" class="bg-slate-50">
+                    <td colspan="6" class="px-4 py-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-xs text-slate-500 mb-1">Driving License</p>
+                                {% if item.user.driving_license %}
+                                    <a class="text-blue-600 hover:underline" target="_blank" href="{{ item.user.driving_license.url }}">Open Driving License</a>
+                                {% else %}
+                                    <p class="text-slate-400">Not uploaded</p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-500 mb-1">Insurance Document</p>
+                                {% if item.user.insurance_document %}
+                                    <a class="text-blue-600 hover:underline" target="_blank" href="{{ item.user.insurance_document.url }}">Open Insurance Document</a>
+                                {% else %}
+                                    <p class="text-slate-400">Not uploaded</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr x-show="activeRejectId === {{ item.id }}" style="display:none;" class="bg-red-50/60">
+                    <td colspan="6" class="px-4 py-4">
+                        <form method="post" action="{% url 'admin_reject_owner' item.id %}" class="flex flex-col md:flex-row gap-3">
+                            {% csrf_token %}
+                            <input type="text" name="rejection_reason" placeholder="Add rejection reason" class="flex-1 px-3 py-2 rounded-lg border border-slate-200" required>
+                            <div class="flex gap-2">
+                                <button type="submit" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">Confirm Reject</button>
+                                <button type="button" @click="activeRejectId = null" class="px-4 py-2 rounded-lg border border-slate-200 bg-white">Cancel</button>
+                            </div>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-4 py-12 text-center text-slate-500">
+                        <p class="text-lg font-medium text-slate-700">No pending owner requests</p>
+                        <p class="text-sm mt-1">All owner requests are processed.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="px-4 py-3 border-b border-slate-100">
+            <h2 class="text-sm font-semibold text-slate-700">Recent Owner Requests</h2>
+        </div>
+        <table class="min-w-full text-sm">
+            <thead class="bg-slate-50 text-slate-500">
+                <tr>
+                    <th class="text-left px-4 py-3">Owner</th>
+                    <th class="text-left px-4 py-3">Email</th>
+                    <th class="text-left px-4 py-3">Status</th>
+                    <th class="text-left px-4 py-3">Reason</th>
+                    <th class="text-left px-4 py-3">Requested At</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for req in recent_requests %}
+                <tr class="hover:bg-slate-50">
+                    <td class="px-4 py-3 font-medium">{{ req.user.username }}</td>
+                    <td class="px-4 py-3">{{ req.user.email }}</td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 rounded-full text-xs
+                            {% if req.status == 'approved' %}bg-green-100 text-green-700
+                            {% elif req.status == 'rejected' %}bg-red-100 text-red-700
+                            {% else %}bg-amber-100 text-amber-700{% endif %}">
+                            {{ req.status|title }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-slate-500">{{ req.rejection_reason|default:'-' }}</td>
+                    <td class="px-4 py-3 text-slate-500">{{ req.created_at|date:'M d, Y H:i' }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-4 py-8 text-center text-slate-500">No owner request history found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

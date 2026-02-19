@@ -12,4 +12,10 @@ urlpatterns = [
     path('owner/<int:pk>/edit/', views.OwnerCarUpdateView.as_view(), name='owner_edit_car'),
     path('owner/<int:pk>/delete/', views.OwnerCarDeleteView.as_view(), name='owner_delete_car'),
     path('owner/<int:pk>/toggle-availability/', views.OwnerCarToggleAvailabilityView.as_view(), name='toggle_availability'),
+
+    # Admin moderation views
+    path('admin/list/', views.AdminCarListView.as_view(), name='admin_car_list'),
+    path('admin/<int:pk>/toggle-availability/', views.AdminCarAvailabilityToggleView.as_view(), name='admin_toggle_car_availability'),
+    path('admin/<int:pk>/toggle-featured/', views.AdminCarFeatureToggleView.as_view(), name='admin_toggle_car_featured'),
+    path('admin/bulk-action/', views.AdminCarBulkActionView.as_view(), name='admin_car_bulk_action'),
 ]

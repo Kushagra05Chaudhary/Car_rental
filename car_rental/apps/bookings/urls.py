@@ -11,4 +11,9 @@ urlpatterns = [
     # User booking views
     path('list/', views.UserBookingListView.as_view(), name='booking_list'),
     path('<int:pk>/', views.UserBookingDetailView.as_view(), name='booking_detail'),
+
+    # Admin booking controls
+    path('admin/list/', views.AdminBookingListView.as_view(), name='admin_booking_list'),
+    path('admin/<int:pk>/cancel/', views.AdminCancelBookingView.as_view(), name='admin_cancel_booking'),
+    path('admin/<int:pk>/refund/', views.AdminRefundBookingView.as_view(), name='admin_refund_booking'),
 ]

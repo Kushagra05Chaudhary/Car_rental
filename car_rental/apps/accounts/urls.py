@@ -16,4 +16,13 @@ urlpatterns = [
     path('owner/profile/', views.owner_profile_view, name='owner_profile'),
     path('owner/profile/edit/', views.owner_profile_edit_view, name='owner_profile_edit'),
     path('owner/change-password/', views.owner_change_password_view, name='owner_change_password'),
+
+    # Admin owner moderation
+    path('admin/owners/', views.AdminOwnerListView.as_view(), name='admin_owner_management'),
+    path('admin/owners/<int:pk>/approve/', views.ApproveOwnerView.as_view(), name='admin_approve_owner'),
+    path('admin/owners/<int:pk>/reject/', views.RejectOwnerView.as_view(), name='admin_reject_owner'),
+
+    # Admin user management
+    path('admin/users/', views.AdminUserManagementView.as_view(), name='admin_user_management'),
+    path('admin/users/<int:pk>/toggle-status/', views.AdminUserToggleStatusView.as_view(), name='admin_toggle_user_status'),
 ]

@@ -26,6 +26,7 @@ class Car(models.Model):
     image = models.ImageField(upload_to='car_images/', null=True, blank=True)
 
     is_available = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
 
     created_at = models.DateTimeField(default=timezone.now)

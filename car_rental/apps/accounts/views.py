@@ -9,6 +9,11 @@ from .forms import RegisterForm
 from .models import CustomUser, OTP
 from .models import OwnerRequest
 import random
+from django.views.generic import TemplateView, View
+from django.utils.decorators import method_decorator
+from django.shortcuts import get_object_or_404
+from apps.accounts.decorators import role_required
+from .services import OwnerModerationService, UserManagementService
 
 
 # ================= REGISTER WITH OTP =================
@@ -265,3 +270,77 @@ def owner_change_password_view(request):
         form = OwnerPasswordChangeForm(request.user)
     
     return render(request, 'accounts/owner_change_password.html', {'form': form})
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(role_required('admin'), name='dispatch')
+class AdminOwnerListView(TemplateView):
+    template_name = 'accounts/admin_owner_management.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['pending_requests'] = OwnerModerationService.get_pending_requests()
+        context['recent_requests'] = OwnerRequest.objects.select_related('user').order_by('-created_at')[:15]
+        context['approved_count'] = OwnerRequest.objects.filter(status='approved').count()
+        context['rejected_count'] = OwnerRequest.objects.filter(status='rejected').count()
+        context['pending_count'] = OwnerRequest.objects.filter(status='pending').count()
+        return context
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(role_required('admin'), name='dispatch')
+class ApproveOwnerView(View):
+    def post(self, request, pk, *args, **kwargs):
+        OwnerModerationService.approve_request(pk)
+        messages.success(request, 'Owner request approved successfully.')
+        return redirect('admin_owner_management')
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(role_required('admin'), name='dispatch')
+class RejectOwnerView(View):
+    def post(self, request, pk, *args, **kwargs):
+        rejection_reason = request.POST.get('rejection_reason', '')
+        OwnerModerationService.reject_request(pk, rejection_reason)
+        messages.warning(request, 'Owner request rejected.')
+        return redirect('admin_owner_management')
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(role_required('admin'), name='dispatch')
+class AdminUserManagementView(TemplateView):
+    template_name = 'accounts/admin_user_management.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        search = self.request.GET.get('q', '').strip()
+        role = self.request.GET.get('role', '').strip()
+        status = self.request.GET.get('status', '').strip()
+
+        context['users'] = UserManagementService.get_users(
+            search=search or None,
+            role=role or None,
+            status=status or None,
+        )
+        context['stats'] = UserManagementService.get_stats()
+        context['filters'] = {
+            'q': search,
+            'role': role,
+            'status': status,
+        }
+        return context
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(role_required('admin'), name='dispatch')
+class AdminUserToggleStatusView(View):
+    def post(self, request, pk, *args, **kwargs):
+        try:
+            user = UserManagementService.toggle_user_status(pk, request.user)
+            state = 'activated' if user.is_active else 'deactivated'
+            messages.success(request, f'{user.username} has been {state}.')
+        except ValueError as exc:
+            messages.error(request, str(exc))
+
+        return redirect('admin_user_management')

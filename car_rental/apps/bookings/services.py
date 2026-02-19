@@ -1,5 +1,6 @@
 from django.db import transaction
 from django.utils import timezone
+from django.db.models import Q
 from .models import Booking
 from apps.payments.models import Payment
 
@@ -130,3 +131,42 @@ class UserBookingService:
             user=user,
             status__in=['pending', 'confirmed']
         ).order_by('-created_at')
+
+
+class AdminBookingService:
+    """Service layer for admin booking controls."""
+
+    @staticmethod
+    def get_bookings(status=None, start_date=None, end_date=None, query=None):
+        bookings = Booking.objects.select_related('user', 'car', 'car__owner').all().order_by('-created_at')
+
+        if status:
+            bookings = bookings.filter(status=status)
+        if start_date:
+            bookings = bookings.filter(created_at__date__gte=start_date)
+        if end_date:
+            bookings = bookings.filter(created_at__date__lte=end_date)
+        if query:
+            bookings = bookings.filter(
+                Q(user__username__icontains=query)
+                | Q(car__name__icontains=query)
+                | Q(car__owner__username__icontains=query)
+            )
+
+        return bookings
+
+    @staticmethod
+    @transaction.atomic
+    def cancel_booking(booking):
+        if booking.status in ['cancelled', 'completed']:
+            raise ValueError('This booking cannot be cancelled.')
+
+        booking.status = 'cancelled'
+        booking.save(update_fields=['status'])
+        return booking
+
+    @staticmethod
+    def can_refund(booking):
+        if not hasattr(booking, 'payment'):
+            return False
+        return booking.payment.status in ['completed', 'pending', 'failed']
