@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="max-w-6xl mx-auto py-12 px-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- LEFT: Image and Main Info -->
+        <div class="lg:col-span-2">
+            <!-- Main Image -->
+            <div class="relative overflow-hidden rounded-2xl shadow-lg mb-6 group">
+                {% if car.image %}
+                <img src="{{ car.image.url }}" alt="{{ car.name }}" class="w-full h-96 object-cover transition-transform duration-500 group-hover:scale-105">
+                {% else %}
+                <img src="https://via.placeholder.com/600x400?text={{ car.name }}" alt="{{ car.name }}" class="w-full h-96 object-cover transition-transform duration-500 group-hover:scale-105">
+                {% endif %}
+
+                <!-- Status Badge -->
+                <div class="absolute top-4 left-4">
+                    {% if car.is_available %}
+                    <span class="bg-green-500 text-white px-6 py-2 rounded-full font-bold text-lg shadow-md">
+                        ✓ Available Now
+                    </span>
+                    {% else %}
+                    <span class="bg-red-500 text-white px-6 py-2 rounded-full font-bold text-lg shadow-md">
+                        Currently Booked
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Car Details Section -->
+            <div class="bg-white rounded-2xl shadow-md p-8 border border-gray-100 mb-6">
+                <div class="flex justify-between items-start mb-4">
+                    <h1 class="text-4xl font-bold text-gray-900">{{ car.name }}</h1>
+                    <span class="text-sm font-medium px-3 py-1 bg-gray-100 rounded-full text-gray-600">ID: #{{ car.id }}</span>
+                </div>
+
+                <!-- Quick Info Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl text-center hover:shadow-sm transition-shadow">
+                        <div class="text-2xl mb-2">🏷️</div>
+                        <div class="text-sm text-gray-600 uppercase tracking-wide font-semibold">Brand</div>
+                        <div class="font-bold text-gray-900 text-lg">{{ car.brand }}</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl text-center hover:shadow-sm transition-shadow">
+                        <div class="text-2xl mb-2">👥</div>
+                        <div class="text-sm text-gray-600 uppercase tracking-wide font-semibold">Seats</div>
+                        <div class="font-bold text-gray-900 text-lg">{{ car.seats }}</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl text-center hover:shadow-sm transition-shadow">
+                        <div class="text-2xl mb-2">🏎️</div>
+                        <div class="text-sm text-gray-600 uppercase tracking-wide font-semibold">Type</div>
+                        <div class="font-bold text-gray-900 text-lg">{{ car.car_type }}</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-xl text-center hover:shadow-sm transition-shadow">
+                        <div class="text-2xl mb-2">📍</div>
+                        <div class="text-sm text-gray-600 uppercase tracking-wide font-semibold">Location</div>
+                        <div class="font-bold text-gray-900 text-lg">{{ car.location }}</div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                {% if car.description %}
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-3 border-b pb-2">About This Car</h2>
+                    <p class="text-gray-600 leading-relaxed text-lg">{{ car.description }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Reviews Section -->
+            <div class="bg-white rounded-2xl shadow-md p-8 border border-gray-100">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <span>⭐</span> Reviews & Ratings
+                </h2>
+
+                <!-- Rating Summary -->
+                <div class="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-6 mb-8">
+                    <div class="flex items-center gap-6">
+                        <div class="text-center">
+                            <div class="text-5xl font-bold text-yellow-500 mb-1">
+                                {{ rating_average|default:"0"|floatformat:1 }}
+                            </div>
+                            <div class="text-sm text-gray-600 font-medium">out of 5</div>
+                        </div>
+                        <div class="h-16 w-px bg-gray-300"></div>
+                        <div>
+                            <div class="font-semibold text-gray-900 text-lg mb-1">{{ rating_count|default:"0" }} Verified Reviews</div>
+                            <div class="text-yellow-400 text-2xl tracking-tight">
+                                {% with rating=rating_average|floatformat:0|add:"0" %}
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= rating %}★{% else %}☆{% endif %}
+                                    {% endfor %}
+                                {% endwith %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reviews List -->
+                {% if reviews %}
+                <div class="space-y-6">
+                    {% for review in reviews %}
+                    <div class="border border-gray-100 rounded-xl p-6 bg-gray-50 hover:bg-white hover:shadow-md transition-all">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                                    {{ review.user.first_name|default:review.user.username|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <div class="font-bold text-gray-900">
+                                        {{ review.user.first_name|default:review.user.username }}
+                                    </div>
+                                    <div class="text-xs text-gray-500">{{ review.created_at|date:"F d, Y" }}</div>
+                                </div>
+                            </div>
+                            <div class="text-yellow-400 text-lg">
+                                {% for i in "12345"|make_list %}
+                                    {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% if review.comment %}
+                        <p class="text-gray-700 leading-relaxed pl-13 border-l-4 border-gray-200 pl-4">{{ review.comment }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-12 bg-gray-50 rounded-xl border-dashed border-2 border-gray-200">
+                    <div class="text-5xl mb-4 opacity-50">📝</div>
+                    <h3 class="text-lg font-medium text-gray-900">No reviews yet</h3>
+                    <p class="text-gray-500">Be the first to share your experience!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- RIGHT: Booking Section -->
+        <div class="lg:col-span-1">
+            <div class="sticky top-24 space-y-6">
+                <!-- Price Card -->
+                <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-xl p-8 text-white overflow-hidden relative border border-white/10">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-16 -mt-16"></div>
+                    <div class="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-5 rounded-full -ml-12 -mb-12"></div>
+                    
+                    <h3 class="text-slate-300 text-lg font-medium mb-6 relative z-10">Rental Price</h3>
+
+                    <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-5 mb-6 border border-white/10 relative z-10">
+                        <span class="text-5xl font-extrabold leading-none">₹{{ car.price_per_day }}</span>
+                        <p class="text-slate-300 text-sm font-semibold mt-2">per day</p>
+                    </div>
+
+                    <div class="space-y-3 mb-8 relative z-10">
+                        <div class="flex items-center justify-between text-slate-300 text-sm">
+                            <span>Weekly Estimate (7 days)</span>
+                            <span class="font-bold text-white">₹{% widthratio car.price_per_day 1 7 %}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-slate-300 text-sm">
+                            <span>Monthly Estimate (30 days)</span>
+                            <span class="font-bold text-white">₹{% widthratio car.price_per_day 1 30 %}</span>
+                        </div>
+                    </div>
+
+                    <div class="relative z-10">
+                        {% if car.status == 'approved' and car.is_available %}
+                        <a href="{% url 'create_booking' car.id %}"
+                            class="block w-full bg-white text-slate-900 font-bold py-4 rounded-xl hover:bg-slate-50 transition-all shadow-lg text-center text-lg transform hover:-translate-y-1">
+                            🚗 Book Now
+                        </a>
+                        {% elif car.status != 'approved' %}
+                        <div class="w-full bg-gray-500/50 backdrop-blur-md text-white font-bold py-4 rounded-xl text-center border border-white/20 cursor-not-allowed">
+                            🔒 Pending Approval
+                        </div>
+                        {% else %}
+                        <div class="w-full bg-red-500/80 backdrop-blur-md text-white font-bold py-4 rounded-xl text-center border border-white/20 cursor-not-allowed">
+                            🚫 Currently Unavailable
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Features List -->
+                <div class="bg-white rounded-2xl shadow-md p-6 border border-gray-100">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Included Features</h3>
+
+                    <ul class="space-y-4">
+                        <li class="flex items-center gap-3 text-gray-700">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                                ✓
+                            </div>
+                            <span class="font-medium">Free Cancellation</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-700">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                🎧
+                            </div>
+                            <span class="font-medium">24/7 Customer Support</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-700">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
+                                🛡️
+                            </div>
+                            <span class="font-medium">Basic Insurance Included</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-700">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
+                                🚚
+                            </div>
+                            <span class="font-medium">Free Delivery Options</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

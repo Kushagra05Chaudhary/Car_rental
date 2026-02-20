@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Owner Dashboard{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-50">
+    <div class="max-w-7xl mx-auto">
+        <!-- Top Banner -->
+        <div class="bg-gradient-to-r from-slate-800 to-slate-900 border-b border-white/10 text-white px-6 py-8 relative overflow-hidden">
+            <!-- Background Decoration -->
+            <div class="absolute inset-0 bg-blue-500 opacity-5 mix-blend-overlay"></div>
+            <div class="absolute -right-10 -top-10 w-64 h-64 bg-slate-700/50 rounded-full blur-3xl opacity-20"></div>
+
+            <div class="relative z-10">
+                <h1 class="text-3xl font-extrabold tracking-tight">Welcome back! 👋</h1>
+                <p class="text-slate-300 mt-2 text-lg">Here's your business overview</p>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="px-6 py-8 space-y-8">
+            <!-- Key Metrics Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Stat Card: Total Cars -->
+                <div
+                    class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md hover:scale-105 transition-all duration-300 animate-slide-up">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium mb-1">Total Cars</p>
+                            <p class="text-4xl font-bold text-gray-900">{{ total_cars }}</p>
+                            <p class="text-xs text-gray-500 mt-2">{{ active_cars }} active</p>
+                        </div>
+                        <div class="text-5xl opacity-20">🚗</div>
+                    </div>
+                </div>
+
+                <!-- Stat Card: Active Cars -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md hover:scale-105 transition-all duration-300 animate-slide-up"
+                    style="animation-delay: 0.1s;">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium mb-1">Active Cars</p>
+                            <p class="text-4xl font-bold text-green-600">{{ active_cars }}</p>
+                            <p class="text-xs text-green-500 mt-2">Ready to rent</p>
+                        </div>
+                        <div class="text-5xl opacity-20">✓</div>
+                    </div>
+                </div>
+
+                <!-- Stat Card: Pending Bookings -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md hover:scale-105 transition-all duration-300 animate-slide-up"
+                    style="animation-delay: 0.2s;">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium mb-1">Pending Bookings</p>
+                            <p class="text-4xl font-bold text-yellow-600">{{ pending_bookings }}</p>
+                            <p class="text-xs text-yellow-500 mt-2">Awaiting response</p>
+                        </div>
+                        <div class="text-5xl opacity-20">⏳</div>
+                    </div>
+                </div>
+
+                <!-- Stat Card: Total Earnings -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md hover:scale-105 transition-all duration-300 animate-slide-up"
+                    style="animation-delay: 0.3s;">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium mb-1">Total Earnings</p>
+                            <p class="text-4xl font-bold text-green-600 mt-2">₹{{ total_earnings|floatformat:2 }}</p>
+                            <p class="text-xs text-green-600 mt-2">All-time revenue</p>
+                        </div>
+                        <div class="text-5xl opacity-20">💰</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <a href="{% url 'owner_add_car' %}"
+                    class="group bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg text-center flex items-center justify-center gap-2 hover:scale-105">
+                    <span class="text-2xl group-hover:scale-125 transition-transform">➕</span>
+                    <span>Add New Car</span>
+                </a>
+                <a href="{% url 'owner_booking_list' %}"
+                    class="group bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg text-center flex items-center justify-center gap-2 hover:scale-105">
+                    <span class="text-2xl group-hover:scale-125 transition-transform">📋</span>
+                    <span>View Bookings</span>
+                </a>
+                <a href="{% url 'owner_earnings' %}"
+                    class="group bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg text-center flex items-center justify-center gap-2 hover:scale-105">
+                    <span class="text-2xl group-hover:scale-125 transition-transform">💹</span>
+                    <span>View Earnings</span>
+                </a>
+            </div>
+
+            <!-- Dashboard Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Booking Status -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 animate-slide-up"
+                    style="animation-delay: 0.4s;">
+                    <h2 class="text-lg font-bold text-gray-900 mb-6">Booking Status</h2>
+                    <div class="space-y-3">
+                        <div
+                            class="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-green-100 rounded-lg">
+                            <span class="text-gray-700 font-medium">Confirmed</span>
+                            <span class="text-2xl font-bold text-green-600">{{ confirmed_bookings }}</span>
+                        </div>
+                        <div
+                            class="flex items-center justify-between p-3 bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg">
+                            <span class="text-gray-700 font-medium">Pending</span>
+                            <span class="text-2xl font-bold text-yellow-600">{{ pending_bookings }}</span>
+                        </div>
+                        <div
+                            class="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
+                            <span class="text-gray-700 font-medium">Completed</span>
+                            <span class="text-2xl font-bold text-blue-600">{{ completed_bookings }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Car Status -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 animate-slide-up"
+                    style="animation-delay: 0.5s;">
+                    <h2 class="text-lg font-bold text-gray-900 mb-6">Car Status</h2>
+                    <div class="space-y-3">
+                        <div
+                            class="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-green-100 rounded-lg">
+                            <span class="text-gray-700 font-medium">Available</span>
+                            <span class="text-2xl font-bold text-green-600">{{ active_cars }}</span>
+                        </div>
+                        <div
+                            class="flex items-center justify-between p-3 bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg">
+                            <span class="text-gray-700 font-medium">Pending</span>
+                            <span class="text-2xl font-bold text-yellow-600">{{ pending_cars }}</span>
+                        </div>
+                        <div
+                            class="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg">
+                            <span class="text-gray-700 font-medium">Approved</span>
+                            <span class="text-2xl font-bold text-purple-600">{{ approved_cars }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 animate-slide-up"
+                    style="animation-delay: 0.6s;">
+                    <h2 class="text-lg font-bold text-gray-900 mb-6">Quick Links</h2>
+                    <div class="space-y-2">
+                        <a href="{% url 'owner_car_list' %}"
+                            class="block p-3 bg-blue-50 hover:bg-blue-100 rounded-lg text-blue-700 hover:text-blue-900 font-semibold transition-all hover:translate-x-1">
+                            🚗 My Cars →
+                        </a>
+                        <a href="{% url 'owner_booking_list' %}"
+                            class="block p-3 bg-green-50 hover:bg-green-100 rounded-lg text-green-700 hover:text-green-900 font-semibold transition-all hover:translate-x-1">
+                            📅 My Bookings →
+                        </a>
+                        <a href="{% url 'owner_earnings' %}"
+                            class="block p-3 bg-purple-50 hover:bg-purple-100 rounded-lg text-purple-700 hover:text-purple-900 font-semibold transition-all hover:translate-x-1">
+                            💹 Earnings Report →
+                        </a>
+                        <a href="{% url 'owner_profile' %}"
+                            class="block p-3 bg-orange-50 hover:bg-orange-100 rounded-lg text-orange-700 hover:text-orange-900 font-semibold transition-all hover:translate-x-1">
+                            👤 My Profile →
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Bookings -->
+            {% if recent_bookings %}
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 animate-slide-up"
+                style="animation-delay: 0.7s;">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-lg font-bold text-gray-900">Recent Bookings</h2>
+                    <a href="{% url 'owner_booking_list' %}"
+                        class="text-blue-600 hover:text-blue-900 font-semibold text-sm">View All →</a>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-gray-900 font-semibold">Car</th>
+                                <th class="px-4 py-3 text-left text-gray-900 font-semibold">Renter</th>
+                                <th class="px-4 py-3 text-left text-gray-900 font-semibold">Dates</th>
+                                <th class="px-4 py-3 text-left text-gray-900 font-semibold">Amount</th>
+                                <th class="px-4 py-3 text-left text-gray-900 font-semibold">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for booking in recent_bookings %}
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-4 py-3 font-medium text-gray-900">{{ booking.car.name }}</td>
+                                <td class="px-4 py-3 text-gray-600">{{ booking.user.username }}</td>
+                                <td class="px-4 py-3 text-gray-600 text-xs">{{ booking.start_date|date:"M d" }} − {{
+                                    booking.end_date|date:"M d" }}</td>
+                                <td class="px-4 py-3 font-bold text-green-600">₹{{ booking.total_price|floatformat:2 }}
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="px-3 py-1 rounded-full text-xs font-semibold
+                                        {% if booking.status == 'confirmed' %}
+                                            bg-green-100 text-green-700
+                                        {% elif booking.status == 'pending' %}
+                                            bg-yellow-100 text-yellow-700
+                                        {% else %}
+                                            bg-gray-100 text-gray-700
+                                        {% endif %}">
+                                        {{ booking.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center animate-slide-up"
+                style="animation-delay: 0.7s;">
+                <div class="text-6xl mb-4">📅</div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">No Bookings Yet</h3>
+                <p class="text-gray-600 mb-6">Your bookings will appear here.</p>
+                <a href="{% url 'owner_car_list' %}" class="inline-block btn-primary">
+                    Add Your First Car
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

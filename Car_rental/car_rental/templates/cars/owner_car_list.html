@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Cars - Owner Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    {% for car in cars %}
+    .car-card-{{ forloop.counter }} {
+        animation-delay: {{ forloop.counter|add:3 }}00ms;
+    }
+    {% endfor %}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-50">
+    <!-- Header Section -->
+    <div class="bg-gradient-to-r from-slate-800 to-slate-900 text-white px-8 py-8 border-b border-white/10 relative overflow-hidden">
+        <!-- Abstract patterns -->
+        <div class="absolute top-0 right-0 p-12 opacity-10 blur-3xl rounded-full bg-blue-400 mix-blend-multiply filter animate-blob"></div>
+        <div class="absolute -bottom-8 left-20 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-4000"></div>
+
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 relative z-10">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight">My Cars</h1>
+                <p class="text-slate-300 mt-2 font-medium">Manage your vehicle listings</p>
+            </div>
+            <a href="{% url 'owner_add_car' %}" class="group bg-white text-slate-900 font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 hover:bg-slate-50 flex items-center gap-2">
+                <span class="text-2xl group-hover:scale-125 transition-transform text-slate-700">➕</span>
+                <span>Add New Car</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md hover:scale-105 transition-all duration-300 animate-slide-up">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Total Cars</p>
+                        <p class="text-4xl font-bold text-gray-900 mt-2">{{ total_cars }}</p>
+                    </div>
+                    <div class="text-4xl opacity-20">🚗</div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md hover:scale-105 transition-all duration-300 animate-slide-up" style="animation-delay: 0.1s;">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Active</p>
+                        <p class="text-4xl font-bold text-green-600 mt-2">{{ active_cars }}</p>
+                    </div>
+                    <div class="text-4xl opacity-20">✓</div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md hover:scale-105 transition-all duration-300 animate-slide-up" style="animation-delay: 0.2s;">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Pending</p>
+                        <p class="text-4xl font-bold text-yellow-600 mt-2">{{ pending_cars }}</p>
+                    </div>
+                    <div class="text-4xl opacity-20">⏳</div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md hover:scale-105 transition-all duration-300 animate-slide-up" style="animation-delay: 0.3s;">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Approved</p>
+                        <p class="text-4xl font-bold text-purple-600 mt-2">{{ approved_cars }}</p>
+                    </div>
+                    <div class="text-4xl opacity-20">👍</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter Bar -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 animate-slide-up" style="animation-delay: 0.4s;">
+            <form method="GET" class="flex flex-col md:flex-row gap-4 items-end">
+                <div class="flex-1">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Search Cars</label>
+                    <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Search by name..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Filter</label>
+                    <select name="status" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">All Status</option>
+                        <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active Only</option>
+                        <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending Only</option>
+                        <option value="approved" {% if request.GET.status == 'approved' %}selected{% endif %}>Approved Only</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">
+                    🔍 Search
+                </button>
+            </form>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mb-6 p-4 rounded-xl animate-slide-down {% if message.tags == 'success' %}bg-green-50 border border-green-200 text-green-800{% elif message.tags == 'error' %}bg-red-50 border border-red-200 text-red-800{% else %}bg-blue-50 border border-blue-200 text-blue-800{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Cars Grid -->
+        <div class="space-y-6">
+            {% if cars %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for car in cars %}
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group animate-slide-up car-card-{{ forloop.counter }}">
+                        <!-- Car Image -->
+                        <div class="relative h-48 bg-gradient-to-br from-gray-200 to-gray-300 overflow-hidden">
+                            {% if car.image %}
+                                <img src="{{ car.image.url }}" alt="{{ car.name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                            {% else %}
+                                <div class="w-full h-full flex items-center justify-center text-6xl opacity-20">🚗</div>
+                            {% endif %}
+                            
+                            <!-- Status Badge -->
+                            <span class="absolute top-4 right-4 px-4 py-2 rounded-full text-xs font-bold text-white {% if car.status == 'approved' %}bg-green-500{% elif car.status == 'pending' %}bg-yellow-500{% else %}bg-red-500{% endif %}">
+                                {{ car.get_status_display }}
+                            </span>
+
+                            <!-- Availability Badge -->
+                            <span class="absolute top-4 left-4 px-4 py-2 rounded-full text-xs font-bold text-white {% if car.is_available %}bg-green-600{% else %}bg-gray-600{% endif %}">
+                                {% if car.is_available %}Available{% else %}Unavailable{% endif %}
+                            </span>
+                        </div>
+
+                        <!-- Car Details -->
+                        <div class="p-5">
+                            <!-- Name + Type row -->
+                            <div class="flex items-start justify-between gap-2 mb-3">
+                                <div>
+                                    <h3 class="text-lg font-extrabold text-gray-900 leading-tight">{{ car.name }}</h3>
+                                    <p class="text-xs text-gray-500 font-medium mt-0.5">{{ car.brand }} &bull; {{ car.car_type }}</p>
+                                </div>
+                                <!-- Availability pill -->
+                                <span class="shrink-0 mt-0.5 px-2.5 py-1 rounded-full text-xs font-bold
+                                    {% if car.is_available %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-500{% endif %}">
+                                    {% if car.is_available %}● Available{% else %}○ Unavailable{% endif %}
+                                </span>
+                            </div>
+
+                            <!-- Location row -->
+                            <div class="flex items-center gap-1.5 text-gray-500 text-xs mb-4">
+                                <span>📍</span>
+                                <span class="font-medium">{{ car.location|default:"—" }}</span>
+                                <span class="mx-1">·</span>
+                                <span>👥</span>
+                                <span class="font-medium">{{ car.seats }} seats</span>
+                            </div>
+
+                            <!-- Price + Status bar -->
+                            <div class="flex items-center justify-between bg-slate-50 rounded-xl px-4 py-3 mb-4 border border-slate-100">
+                                <div>
+                                    <p class="text-xl font-extrabold text-slate-900">₹{{ car.price_per_day }}</p>
+                                    <p class="text-xs text-slate-400">per day</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="inline-block px-3 py-1 rounded-full text-xs font-bold
+                                        {% if car.status == 'approved' %}bg-emerald-100 text-emerald-700
+                                        {% elif car.status == 'pending' %}bg-amber-100 text-amber-700
+                                        {% else %}bg-red-100 text-red-700{% endif %}">
+                                        {{ car.get_status_display }}
+                                    </span>
+                                    <p class="text-xs text-slate-400 mt-1">admin status</p>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex gap-2">
+                                <!-- Edit -->
+                                <a href="{% url 'owner_edit_car' car.id %}"
+                                    class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-xl transition-all shadow-sm hover:shadow-md">
+                                    ✏️ Edit
+                                </a>
+
+                                <!-- Toggle Availability -->
+                                <form method="POST" action="{% url 'toggle_availability' car.id %}" class="flex-1">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="is_available" value="{% if car.is_available %}False{% else %}True{% endif %}">
+                                    <button type="submit"
+                                        class="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-bold rounded-xl transition-all shadow-sm hover:shadow-md
+                                        {% if car.is_available %}bg-amber-500 hover:bg-amber-400 text-white{% else %}bg-green-600 hover:bg-green-500 text-white{% endif %}">
+                                        {% if car.is_available %}⊘ Disable{% else %}✓ Enable{% endif %}
+                                    </button>
+                                </form>
+
+                                <!-- Delete -->
+                                <a href="{% url 'owner_delete_car' car.id %}"
+                                    class="flex items-center justify-center w-11 h-11 bg-red-50 hover:bg-red-600 text-red-500 hover:text-white rounded-xl transition-all shadow-sm hover:shadow-md"
+                                    title="Delete car">
+                                    🗑️
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <div class="mt-12 flex justify-center gap-2">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-semibold">First</a>
+                        <a href="?page={{ page_obj.previous_page_number }}" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-semibold">Previous</a>
+                    {% endif %}
+                    
+                    <span class="px-4 py-2 text-gray-700 font-semibold">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold">Next</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold">Last</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% else %}
+            <!-- Empty State -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-16 text-center animate-slide-up">
+                <div class="text-7xl mb-4">🚗</div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">No Cars Yet</h3>
+                <p class="text-gray-600 mb-8 max-w-sm mx-auto">Start growing your car rental business by adding your first vehicle!</p>
+                <a href="{% url 'owner_add_car' %}" class="inline-block btn-primary text-lg px-8 py-3">
+                    ➕ Add Your First Car
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

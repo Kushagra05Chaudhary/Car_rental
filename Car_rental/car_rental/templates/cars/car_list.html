@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- HEADER SECTION -->
+<section class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-12 relative overflow-hidden border-b border-white/10">
+    <div class="absolute inset-0 bg-white opacity-[0.02] pattern-grid"></div>
+    <div class="max-w-6xl mx-auto px-6 relative z-10">
+        <h1 class="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">Available Vehicles</h1>
+        <p class="text-slate-400 text-lg font-medium">Choose from our premium collection of cars</p>
+    </div>
+</section>
+
+<div class="max-w-6xl mx-auto px-6 py-10">
+
+    <!-- Filter Section -->
+    <form method="GET" class="mb-10 bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="text-lg font-extrabold text-gray-900 flex items-center gap-2">🔍 Filter Cars</h3>
+            {% if active_filters %}
+            <a href="{% url 'car_list' %}" class="text-xs font-bold text-red-500 hover:text-red-700 transition-colors">✕ Clear All Filters</a>
+            {% endif %}
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+            <!-- Search -->
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Search</label>
+                <input type="text" name="search" value="{{ search }}"
+                    placeholder="Car name or brand…"
+                    class="w-full border border-gray-200 bg-gray-50 px-4 py-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all">
+            </div>
+
+            <!-- Car Type -->
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Car Type</label>
+                <select name="car_type"
+                    class="w-full border border-gray-200 bg-gray-50 px-4 py-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all">
+                    <option value="">All Types</option>
+                    {% for t in all_types %}
+                    <option value="{{ t }}" {% if car_type == t %}selected{% endif %}>{{ t }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Location -->
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Location</label>
+                <select name="location"
+                    class="w-full border border-gray-200 bg-gray-50 px-4 py-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all">
+                    <option value="">All Locations</option>
+                    {% for loc in all_locations %}
+                    <option value="{{ loc }}" {% if location == loc %}selected{% endif %}>{{ loc }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Min Seats -->
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Min Seats</label>
+                <select name="min_seats"
+                    class="w-full border border-gray-200 bg-gray-50 px-4 py-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all">
+                    <option value="">Any</option>
+                    <option value="2"  {% if min_seats == '2'  %}selected{% endif %}>2+</option>
+                    <option value="4"  {% if min_seats == '4'  %}selected{% endif %}>4+</option>
+                    <option value="5"  {% if min_seats == '5'  %}selected{% endif %}>5+</option>
+                    <option value="7"  {% if min_seats == '7'  %}selected{% endif %}>7+</option>
+                </select>
+            </div>
+
+            <!-- Sort -->
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Sort By</label>
+                <select name="sort"
+                    class="w-full border border-gray-200 bg-gray-50 px-4 py-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all">
+                    <option value="newest"     {% if sort == 'newest'     %}selected{% endif %}>Newest First</option>
+                    <option value="price_asc"  {% if sort == 'price_asc'  %}selected{% endif %}>Price: Low → High</option>
+                    <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price: High → Low</option>
+                    <option value="seats"      {% if sort == 'seats'      %}selected{% endif %}>Most Seats</option>
+                </select>
+            </div>
+
+            <!-- Max Price Slider -->
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                    Max Price &mdash; <span class="text-blue-600 font-extrabold">₹<span id="price-label">{{ max_price }}</span></span>
+                </label>
+                <input type="range" name="max_price" id="price-slider"
+                    min="0" max="{{ max_db_price }}" step="500" value="{{ max_price }}"
+                    class="w-full h-2 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                    oninput="document.getElementById('price-label').textContent = this.value">
+                <div class="flex justify-between text-xs text-gray-400 mt-1">
+                    <span>₹0</span>
+                    <span>₹{{ max_db_price }}</span>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="mt-5 flex justify-end">
+            <button type="submit"
+                class="px-7 py-2.5 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-700 transition-all text-sm shadow-md">
+                Apply Filters
+            </button>
+        </div>
+    </form>
+
+    <!-- Results Count -->
+    <div class="mb-6 flex items-center justify-between">
+        <p class="text-sm text-gray-500 font-medium">
+            <span class="font-extrabold text-gray-900">{{ cars|length }}</span> car{{ cars|length|pluralize }} found
+        </p>
+    </div>
+
+    {% if cars %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {% for car in cars %}
+        <div
+            class="group bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100 hover:border-blue-300 transition-all card-hover">
+            <!-- Image Section -->
+            <div class="relative overflow-hidden h-56 bg-gradient-to-br from-gray-200 to-gray-300">
+                {% if car.thumbnail %}
+                <img src="{{ car.thumbnail.url }}"
+                    class="h-56 w-full object-cover group-hover:scale-110 transition-transform duration-500">
+                {% elif car.image %}
+                <img src="{{ car.image.url }}"
+                    class="h-56 w-full object-cover group-hover:scale-110 transition-transform duration-500">
+                {% else %}
+                <div class="h-56 w-full flex items-center justify-center text-7xl opacity-20">🚗</div>
+                {% endif %}
+
+                <!-- Badge -->
+                <div class="absolute top-4 right-4">
+                    <span class="bg-green-500 text-white px-4 py-2 rounded-full text-sm font-bold">✓ Available</span>
+                </div>
+                <!-- Type pill -->
+                <div class="absolute bottom-4 left-4">
+                    <span class="bg-black/60 text-white px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm">{{ car.car_type }}</span>
+                </div>
+            </div>
+
+            <!-- Content Section -->
+            <div class="p-6">
+                <h3 class="text-2xl font-bold text-gray-900 mb-1">{{ car.name }}</h3>
+
+                <div class="space-y-1.5 mb-4 text-gray-600">
+                    <div class="flex items-center gap-2">
+                        <span class="text-base">🏷️</span>
+                        <span class="font-medium text-sm">{{ car.brand }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-base">👥</span>
+                        <span class="font-medium text-sm">{{ car.seats }} Seats</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-base">📍</span>
+                        <span class="font-medium text-sm">{{ car.location }}</span>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-100 pt-4 flex items-center justify-between">
+                    <div>
+                        <div class="text-2xl font-extrabold text-gray-900">₹{{ car.price_per_day }}</div>
+                        <div class="text-xs text-gray-400">per day</div>
+                    </div>
+                    <a href="{% url 'car_detail' car.id %}"
+                        class="bg-slate-900 text-white px-5 py-2.5 rounded-xl hover:bg-slate-700 transition-all shadow font-bold text-sm">
+                        View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-20">
+        <div class="text-7xl mb-4 opacity-30">🚗</div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">No Cars Found</h2>
+        <p class="text-gray-500 mb-6">Try adjusting your filters.</p>
+        <a href="{% url 'car_list' %}" class="inline-block bg-gray-900 text-white font-bold px-6 py-3 rounded-xl hover:bg-gray-700 transition-all">Clear Filters</a>
+    </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}

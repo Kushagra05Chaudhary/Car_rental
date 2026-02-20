@@ -1,0 +1,57 @@
+{% extends 'dashboard/dashboard_base.html' %}
+
+{% block dashboard_content %}
+
+<div class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h2 class="text-3xl font-extrabold text-gray-900">Pending Owner Requests</h2>
+        <p class="text-gray-500 mt-1">Review users who want to become car owners</p>
+    </div>
+
+    {% if requests %}
+    <div class="space-y-4">
+        {% for req in requests %}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div
+                        class="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-2xl font-bold shrink-0">
+                        {{ req.user.username|first|upper }}
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900">
+                            {% if req.user.first_name and req.user.last_name %}
+                                {{ req.user.first_name }} {{ req.user.last_name }}
+                            {% else %}
+                                {{ req.user.username }}
+                            {% endif %}
+                        </h3>
+                        <p class="text-sm text-gray-500">{{ req.user.email }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Requested: {{ req.created_at|date:"M d, Y" }}</p>
+                    </div>
+                </div>
+                <div class="flex gap-2 shrink-0">
+                    <a href="{% url 'approve_owner' req.id %}"
+                        class="bg-green-600 text-white font-bold py-2.5 px-5 rounded-xl hover:bg-green-700 transition-all text-sm">
+                        ✓ Approve
+                    </a>
+                    <a href="{% url 'reject_owner' req.id %}"
+                        class="bg-red-600 text-white font-bold py-2.5 px-5 rounded-xl hover:bg-red-700 transition-all text-sm">
+                        ✕ Reject
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+        <div class="text-6xl mb-4">✅</div>
+        <h3 class="text-xl font-bold text-gray-700 mb-2">All caught up!</h3>
+        <p class="text-gray-500">No pending owner requests at this time.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

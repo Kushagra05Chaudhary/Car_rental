@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-5xl">
+
+        <div
+            class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 grid grid-cols-1 lg:grid-cols-2">
+
+            <!-- LEFT PANEL — Marketing -->
+            <div
+                class="bg-gradient-to-br from-gray-900 to-gray-800 p-10 lg:p-14 flex flex-col justify-between text-white relative overflow-hidden">
+                <!-- Decorative circles -->
+                <div class="absolute -top-20 -left-20 w-64 h-64 bg-purple-500 rounded-full opacity-10"></div>
+                <div class="absolute -bottom-16 -right-16 w-48 h-48 bg-blue-500 rounded-full opacity-10"></div>
+
+                <div class="relative z-10">
+                    <p class="text-purple-400 font-bold text-sm tracking-widest uppercase mb-4">Get Started</p>
+                    <h1 class="text-4xl lg:text-5xl font-extrabold leading-tight mb-4">
+                        Your next ride is just a sign-up away.
+                    </h1>
+                    <p class="text-gray-400 text-lg leading-relaxed">
+                        Create your account to browse premium cars, book instantly, and enjoy exclusive member benefits.
+                    </p>
+                </div>
+
+                <!-- Benefits -->
+                <div class="relative z-10 mt-10 space-y-4">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-10 h-10 rounded-full bg-green-500 bg-opacity-20 flex items-center justify-center text-green-400 font-bold shrink-0">
+                            ✓</div>
+                        <div>
+                            <div class="font-semibold">No hidden fees</div>
+                            <div class="text-gray-500 text-sm">Transparent pricing, always</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-10 h-10 rounded-full bg-green-500 bg-opacity-20 flex items-center justify-center text-green-400 font-bold shrink-0">
+                            ✓</div>
+                        <div>
+                            <div class="font-semibold">Flexible rental plans</div>
+                            <div class="text-gray-500 text-sm">Daily, weekly, or monthly</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-10 h-10 rounded-full bg-green-500 bg-opacity-20 flex items-center justify-center text-green-400 font-bold shrink-0">
+                            ✓</div>
+                        <div>
+                            <div class="font-semibold">Verified car owners</div>
+                            <div class="text-gray-500 text-sm">Every listing is background-checked</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL — Register Form -->
+            <div class="p-10 lg:p-14 flex flex-col justify-center">
+                <h2 class="text-3xl font-extrabold text-gray-900 mb-2">Create Account</h2>
+                <p class="text-gray-500 mb-6">Fill in your details to get started.</p>
+
+                {% if form.errors %}
+                <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl font-medium text-sm">
+                    <p class="font-bold mb-1">Please fix the errors below:</p>
+                    {{ form.errors }}
+                </div>
+                {% endif %}
+
+                <form method="post" class="space-y-4">
+                    {% csrf_token %}
+
+                    <!-- Username -->
+                    <div>
+                        <label for="id_username"
+                            class="block text-sm font-semibold text-gray-700 mb-1.5">Username:</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.username.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label for="id_email" class="block text-sm font-semibold text-gray-700 mb-1.5">Email:</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.email.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Phone -->
+                    <div>
+                        <label for="id_phone" class="block text-sm font-semibold text-gray-700 mb-1.5">Phone
+                            Number:</label>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.phone.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Password -->
+                    <div>
+                        <label for="id_password1"
+                            class="block text-sm font-semibold text-gray-700 mb-1.5">Password:</label>
+                        {{ form.password1 }}
+                        {% if form.password1.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.password1.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Confirm Password -->
+                    <div>
+                        <label for="id_password2" class="block text-sm font-semibold text-gray-700 mb-1.5">Confirm
+                            Password:</label>
+                        {{ form.password2 }}
+                        {% if form.password2.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.password2.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit"
+                        class="w-full bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition-all shadow-lg mt-2">
+                        Create Account →
+                    </button>
+                </form>
+
+                <!-- Divider -->
+                <div class="flex items-center gap-4 my-5">
+                    <div class="flex-1 border-t border-gray-200"></div>
+                    <span class="text-gray-400 font-medium text-sm">or</span>
+                    <div class="flex-1 border-t border-gray-200"></div>
+                </div>
+
+                <!-- Alt Actions -->
+                <div class="text-center text-sm">
+                    <p class="text-gray-600">Already have an account?
+                        <a href="{% url 'login' %}" class="text-blue-600 font-semibold hover:underline">Sign in here</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    #id_username,
+    #id_email,
+    #id_phone,
+    #id_password1,
+    #id_password2 {
+        width: 100%;
+        border: 1.5px solid #d1d5db;
+        border-radius: 0.75rem;
+        padding: 0.65rem 1rem;
+        font-size: 1rem;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    #id_username:focus,
+    #id_email:focus,
+    #id_phone:focus,
+    #id_password1:focus,
+    #id_password2:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+</style>
+{% endblock %}

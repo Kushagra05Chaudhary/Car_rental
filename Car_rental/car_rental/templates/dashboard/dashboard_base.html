@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="min-h-[calc(100vh-64px)] bg-gray-50">
+
+    <!-- Main Content -->
+    <div class="p-6 md:p-10">
+        {% block dashboard_content %}
+        {% endblock %}
+    </div>
+
+</div>
+
+{% endblock %}
