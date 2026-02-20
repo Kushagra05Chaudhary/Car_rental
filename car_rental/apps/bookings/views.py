@@ -20,12 +20,38 @@ class OwnerBookingMixin(UserPassesTestMixin, LoginRequiredMixin):
     login_url = 'login'
     
     def test_func(self):
-        """Check if user is owner"""
+        """Check if user is owner and not admin or superuser"""
+        if self.request.user.is_superuser or self.request.user.role == 'admin':
+            return False
         return self.request.user.role == 'owner'
     
     def handle_no_permission(self):
         """Redirect if no permission"""
+        if self.request.user.is_superuser or self.request.user.role == 'admin':
+            messages.error(self.request, 'Admins can only access admin features.')
+            return redirect('admin_dashboard')
         messages.error(self.request, 'You must be an owner to access this page.')
+        return redirect('car_list')
+
+
+# ============ USER VIEWS ============
+
+class UserBookingMixin(UserPassesTestMixin, LoginRequiredMixin):
+    """Mixin to ensure only users can access their bookings"""
+    login_url = 'login'
+    
+    def test_func(self):
+        """Check if user is a regular user and not admin, superuser, or owner"""
+        if self.request.user.is_superuser or self.request.user.role == 'admin':
+            return False
+        return self.request.user.role == 'user'
+    
+    def handle_no_permission(self):
+        """Redirect if no permission"""
+        if self.request.user.is_superuser or self.request.user.role == 'admin':
+            messages.error(self.request, 'Admins can only access admin features.')
+            return redirect('admin_dashboard')
+        messages.error(self.request, 'You must be a regular user to access this page.')
         return redirect('car_list')
 
 
@@ -38,12 +64,20 @@ class OwnerBookingListView(OwnerBookingMixin, ListView):
     
     def get_queryset(self):
         """Get bookings for owner's cars"""
-        return OwnerBookingService.get_owner_bookings(self.request.user).order_by('-created_at')
+        queryset = OwnerBookingService.get_owner_bookings(self.request.user).order_by('-created_at')
+        
+        # Filter by status if provided
+        status = self.request.GET.get('status', '')
+        if status:
+            queryset = queryset.filter(status=status)
+        
+        return queryset
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Add statistics
+        # Add statistics (always show full counts, not filtered)
+        all_bookings = OwnerBookingService.get_owner_bookings(self.request.user)
         pending = OwnerBookingService.get_pending_bookings(self.request.user)
         confirmed = OwnerBookingService.get_confirmed_bookings(self.request.user)
         completed = OwnerBookingService.get_completed_bookings(self.request.user)
@@ -51,7 +85,7 @@ class OwnerBookingListView(OwnerBookingMixin, ListView):
         context['pending_count'] = pending.count()
         context['confirmed_count'] = confirmed.count()
         context['completed_count'] = completed.count()
-        context['total_bookings'] = self.get_queryset().count()
+        context['total_bookings'] = all_bookings.count()
         
         return context
 
@@ -115,12 +149,11 @@ class OwnerRejectBookingView(OwnerBookingMixin, View):
 
 # ============ USER VIEWS ============
 
-class UserBookingListView(LoginRequiredMixin, ListView):
+class UserBookingListView(UserBookingMixin, ListView):
     """User's booking list"""
     model = Booking
     template_name = 'bookings/user_booking.html'
     context_object_name = 'bookings'
-    login_url = 'login'
     paginate_by = 15
     
     def get_queryset(self):
@@ -139,12 +172,11 @@ class UserBookingListView(LoginRequiredMixin, ListView):
         return context
 
 
-class UserBookingDetailView(LoginRequiredMixin, DetailView):
+class UserBookingDetailView(UserBookingMixin, DetailView):
     """View booking details for user"""
     model = Booking
     template_name = 'bookings/user_booking_detail.html'
     context_object_name = 'booking'
-    login_url = 'login'
     
     def get_queryset(self):
         """Ensure user can only view their bookings"""
@@ -153,6 +185,10 @@ class UserBookingDetailView(LoginRequiredMixin, DetailView):
 
 @login_required
 def create_booking(request, car_id):
+    if request.user.is_superuser or request.user.role == 'admin':
+        messages.error(request, 'Admins can only access admin features.')
+        return redirect('admin_dashboard')
+
     car = get_object_or_404(Car, id=car_id, status='approved')
 
     if request.method == 'POST':

@@ -14,4 +14,15 @@ urlpatterns = [
     path('admin/owners/', views.admin_owner_requests, name='admin_owner_requests'),
     path('admin/owners/approve/<int:pk>/', views.approve_owner, name='approve_owner'),
     path('admin/owners/reject/<int:pk>/', views.reject_owner, name='reject_owner'),
+    
+    # User Management Section
+    path('admin/users/', views.admin_users_management, name='admin_users_management'),
+    path('admin/users/<int:user_id>/block/', views.block_user, name='block_user'),
+    path('admin/users/<int:user_id>/unblock/', views.unblock_user, name='unblock_user'),
+    path('admin/users/<int:user_id>/delete/', views.delete_user, name='delete_user'),
+    path('admin/users/<int:user_id>/remove-owner/', views.remove_owner, name='remove_owner'),
+    
+    # Reports Section
+    path('admin/reports/', views.admin_reports, name='admin_reports'),
+    path('admin/reports/download/', views.download_report, name='download_report'),
 ]

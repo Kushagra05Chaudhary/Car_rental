@@ -64,10 +64,13 @@ def login_view(request):
 
 @login_required
 def dashboard_redirect(request):
+    # Superusers and admins can access admin dashboard
     if request.user.is_superuser or request.user.role == 'admin':
         return redirect('admin_dashboard')
+    # Owners get the owner dashboard
     elif request.user.role == 'owner':
         return redirect('owner_dashboard')
+    # Regular users get the user dashboard
     else:
         return redirect('user_dashboard')
 
@@ -187,8 +190,12 @@ def resend_registration_otp(request):
 @login_required
 def become_owner(request):
 
+    if request.user.is_superuser or request.user.role == 'admin':
+        messages.error(request, "Admins cannot become owners.")
+        return redirect('admin_dashboard')
+
     if request.user.role != 'user':
-        messages.error(request, "You are already an owner or admin.")
+        messages.error(request, "You are already an owner.")
         return redirect('dashboard_redirect')
 
     # Prevent duplicate request
@@ -207,6 +214,10 @@ def become_owner(request):
 @login_required
 def owner_profile_view(request):
     """View owner profile"""
+    if request.user.is_superuser or request.user.role == 'admin':
+        messages.error(request, 'Admins cannot access owner profile.')
+        return redirect('admin_dashboard')
+    
     if request.user.role != 'owner':
         messages.error(request, 'Only owners can access this page.')
         return redirect('dashboard_redirect')
@@ -217,6 +228,10 @@ def owner_profile_view(request):
 @login_required
 def owner_profile_edit_view(request):
     """Edit owner profile"""
+    if request.user.is_superuser or request.user.role == 'admin':
+        messages.error(request, 'Admins cannot access owner profile.')
+        return redirect('admin_dashboard')
+    
     if request.user.role != 'owner':
         messages.error(request, 'Only owners can access this page.')
         return redirect('dashboard_redirect')
@@ -239,6 +254,10 @@ def owner_profile_edit_view(request):
 @login_required
 def owner_change_password_view(request):
     """Change password for owner"""
+    if request.user.is_superuser or request.user.role == 'admin':
+        messages.error(request, 'Admins cannot access owner profile.')
+        return redirect('admin_dashboard')
+    
     if request.user.role != 'owner':
         messages.error(request, 'Only owners can access this page.')
         return redirect('dashboard_redirect')

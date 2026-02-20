@@ -294,8 +294,8 @@
                             style="display: none;">
                             <div class="bg-gray-900 px-4 py-3 text-white font-bold text-sm tracking-wide">MENU</div>
 
-                            <!-- User Navigation -->
-                            {% if user.role != 'owner' and user.role != 'admin' %}
+                            <!-- Regular User Navigation -->
+                            {% if user.role == 'user' and not user.is_superuser %}
                             <a href="/"
                                 class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors text-gray-700 hover:text-gray-900 font-medium text-sm">
                                 <span class="text-lg">🏠</span>
@@ -311,10 +311,15 @@
                                 <span class="text-lg">📅</span>
                                 <span>My Bookings</span>
                             </a>
+                            <a href="{% url 'notification_list' %}"
+                                class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors text-gray-700 hover:text-gray-900 font-medium text-sm">
+                                <span class="text-lg">🔔</span>
+                                <span>Notifications</span>
+                            </a>
                             {% endif %}
 
                             <!-- Owner Navigation -->
-                            {% if user.role == 'owner' %}
+                            {% if user.role == 'owner' and not user.is_superuser %}
                             <a href="{% url 'owner_dashboard' %}"
                                 class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors text-gray-700 hover:text-gray-900 font-medium text-sm">
                                 <span class="text-lg">📊</span>
@@ -337,26 +342,34 @@
                             </a>
                             {% endif %}
 
-                            <!-- Admin Navigation -->
-                            {% if user.role == 'admin' %}
+                            <!-- Admin / Superuser Navigation -->
+                            {% if user.role == 'admin' or user.is_superuser %}
                             <a href="{% url 'admin_dashboard' %}"
                                 class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors text-gray-700 hover:text-gray-900 font-medium text-sm">
                                 <span class="text-lg">📊</span>
-                                <span>Dashboard</span>
+                                <span>Admin Overview</span>
                             </a>
-                            <a href="/admin/"
+                            <a href="{% url 'admin_car_approval' %}"
                                 class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors text-gray-700 hover:text-gray-900 font-medium text-sm">
-                                <span class="text-lg">⚙️</span>
-                                <span>Manage Users</span>
+                                <span class="text-lg">✅</span>
+                                <span>Car Approvals</span>
+                            </a>
+                            <a href="{% url 'admin_owner_requests' %}"
+                                class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors text-gray-700 hover:text-gray-900 font-medium text-sm">
+                                <span class="text-lg">📋</span>
+                                <span>Owner Requests</span>
+                            </a>
+                            <a href="{% url 'admin_users_management' %}"
+                                class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors text-gray-700 hover:text-gray-900 font-medium text-sm">
+                                <span class="text-lg">👥</span>
+                                <span>User Management</span>
+                            </a>
+                            <a href="{% url 'admin_reports' %}"
+                                class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors text-gray-700 hover:text-gray-900 font-medium text-sm">
+                                <span class="text-lg">📈</span>
+                                <span>Reports & Analytics</span>
                             </a>
                             {% endif %}
-
-                            <!-- Notifications -->
-                            <a href="{% url 'notification_list' %}"
-                                class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-gray-700 hover:text-gray-900 font-medium text-sm">
-                                <span class="text-lg">🔔</span>
-                                <span>Notifications</span>
-                            </a>
                         </div>
                     </div>
                     {% endif %}
@@ -418,36 +431,20 @@
                             </div>
 
                             <!-- Regular User Menu -->
-                            {% if user.role != 'owner' and user.role != 'admin' %}
+                            {% if user.role == 'user' and not user.is_superuser %}
                             <a href="{% url 'user_dashboard' %}"
-                                class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors text-gray-700 hover:text-gray-900 font-medium text-sm">
-                                <span class="text-lg">👤</span>
-                                <span>User Profile</span>
-                            </a>
-                            <a href="{% url 'become_owner' %}"
-                                class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors text-gray-700 hover:text-gray-900 font-medium text-sm">
-                                <span class="text-lg">🏢</span>
-                                <span>Become Owner</span>
-                            </a>
-                            {% endif %}
-
-                            <!-- Owner Menu -->
-                            {% if user.role == 'owner' %}
-                            <a href="{% url 'owner_profile' %}"
                                 class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors text-gray-700 hover:text-gray-900 font-medium text-sm">
                                 <span class="text-lg">👤</span>
                                 <span>Profile</span>
                             </a>
-                            <a href="{% url 'owner_car_list' %}"
+                            {% elif user.role == 'owner' and not user.is_superuser %}
+                            <a href="{% url 'owner_dashboard' %}"
                                 class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors text-gray-700 hover:text-gray-900 font-medium text-sm">
-                                <span class="text-lg">🚗</span>
-                                <span>Car Status</span>
+                                <span class="text-lg">👤</span>
+                                <span>Profile</span>
                             </a>
-                            {% endif %}
-
-                            <!-- Admin Menu -->
-                            {% if user.role == 'admin' %}
-                            <a href="/admin/auth/user/"
+                            {% elif user.role == 'admin' or user.is_superuser %}
+                            <a href="{% url 'admin_dashboard' %}"
                                 class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors text-gray-700 hover:text-gray-900 font-medium text-sm">
                                 <span class="text-lg">👤</span>
                                 <span>Profile</span>

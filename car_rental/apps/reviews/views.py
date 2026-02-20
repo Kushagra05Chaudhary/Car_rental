@@ -9,6 +9,10 @@ from .models import Review
 
 @login_required
 def create_review(request, booking_id):
+	if request.user.role == 'admin':
+		messages.error(request, 'Admins can only access admin features.')
+		return redirect('admin_dashboard')
+
 	booking = get_object_or_404(Booking, id=booking_id, user=request.user)
 
 	if booking.status != 'completed':

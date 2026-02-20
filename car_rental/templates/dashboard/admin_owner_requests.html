@@ -20,8 +20,13 @@
                         {{ req.user.username|first|upper }}
                     </div>
                     <div>
-                        <h3 class="text-lg font-bold text-gray-900">{{ req.user.get_full_name|default:req.user.username
-                            }}</h3>
+                        <h3 class="text-lg font-bold text-gray-900">
+                            {% if req.user.first_name and req.user.last_name %}
+                                {{ req.user.first_name }} {{ req.user.last_name }}
+                            {% else %}
+                                {{ req.user.username }}
+                            {% endif %}
+                        </h3>
                         <p class="text-sm text-gray-500">{{ req.user.email }}</p>
                         <p class="text-xs text-gray-400 mt-1">Requested: {{ req.created_at|date:"M d, Y" }}</p>
                     </div>

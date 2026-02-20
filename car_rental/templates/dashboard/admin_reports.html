@@ -1,0 +1,315 @@
+{% extends 'dashboard/dashboard_base.html' %}
+
+{% block dashboard_content %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Header -->
+    <div class="mb-8 flex items-center justify-between">
+        <div>
+            <h2 class="text-3xl font-extrabold text-gray-900">Analytics & Reports</h2>
+            <p class="text-gray-500 mt-1">Platform performance and statistics</p>
+        </div>
+        <a href="{% url 'download_report' %}"
+            class="flex items-center gap-2 bg-gray-900 text-white font-bold px-5 py-3 rounded-xl hover:bg-gray-700 transition-all shadow-md text-sm">
+            📄 Download PDF
+        </a>
+    </div>
+
+    <!-- Revenue Section -->
+    <div class="mb-8">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">💰 Revenue</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+                <p class="text-gray-500 text-sm font-medium">Total Revenue</p>
+                <p class="text-3xl font-extrabold text-green-600 mt-3">₹{{ total_revenue|floatformat:0 }}</p>
+                <p class="text-xs text-gray-400 mt-2">All time earnings</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+                <p class="text-gray-500 text-sm font-medium">Revenue (Last 30 Days)</p>
+                <p class="text-3xl font-extrabold text-blue-600 mt-3">₹{{ revenue_last_30_days|floatformat:0 }}</p>
+                <p class="text-xs text-gray-400 mt-2">Recent earnings</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+                <p class="text-gray-500 text-sm font-medium">Commission Earned</p>
+                <p class="text-3xl font-extrabold text-purple-600 mt-3">₹{{ commission_earned|floatformat:0 }}</p>
+                <p class="text-xs text-gray-400 mt-2">10% of total revenue</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+                <p class="text-gray-500 text-sm font-medium">Commission (30 Days)</p>
+                <p class="text-3xl font-extrabold text-indigo-600 mt-3">₹{{ commission_30_days|floatformat:0 }}</p>
+                <p class="text-xs text-gray-400 mt-2">Recent commission</p>
+            </div>
+        </div>
+        <!-- Revenue Line Chart -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h4 class="text-lg font-semibold text-gray-800 mb-4">Monthly Revenue (Last 6 Months)</h4>
+            {% if revenue_months %}
+            <canvas id="revenueChart" height="80"></canvas>
+            {% else %}
+            <p class="text-gray-400 text-center py-8">No revenue data available yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Booking Statistics -->
+    <div class="mb-8">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">📅 Booking Statistics</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Pie Chart -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h4 class="text-lg font-semibold text-gray-800 mb-4">Booking Status Distribution</h4>
+                <canvas id="bookingStatusChart"></canvas>
+            </div>
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <p class="text-gray-500 text-sm font-medium">Total Bookings</p>
+                    <p class="text-3xl font-extrabold text-gray-900 mt-2">{{ total_bookings }}</p>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <p class="text-gray-500 text-sm font-medium">Completed</p>
+                    <p class="text-3xl font-extrabold text-green-600 mt-2">{{ completed_bookings }}</p>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <p class="text-gray-500 text-sm font-medium">Pending</p>
+                    <p class="text-3xl font-extrabold text-yellow-600 mt-2">{{ pending_bookings }}</p>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <p class="text-gray-500 text-sm font-medium">Confirmed</p>
+                    <p class="text-3xl font-extrabold text-blue-600 mt-2">{{ confirmed_bookings }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Car Statistics -->
+    <div class="mb-8">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">🚗 Car Management</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Doughnut Chart -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h4 class="text-lg font-semibold text-gray-800 mb-4">Car Status Overview</h4>
+                <canvas id="carStatusChart"></canvas>
+            </div>
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 gap-4">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <p class="text-gray-500 text-sm font-medium">Approved Cars</p>
+                    <p class="text-3xl font-extrabold text-green-600 mt-2">{{ approved_cars }}</p>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <p class="text-gray-500 text-sm font-medium">Pending Approval</p>
+                    <p class="text-3xl font-extrabold text-yellow-600 mt-2">{{ pending_cars }}</p>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <p class="text-gray-500 text-sm font-medium">Rejected</p>
+                    <p class="text-3xl font-extrabold text-red-600 mt-2">{{ rejected_cars }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Growth -->
+    <div class="mb-8">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">👥 User Growth</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <p class="text-gray-500 text-sm font-medium">Total Owners</p>
+                <p class="text-3xl font-extrabold text-blue-600 mt-2">{{ total_owners }}</p>
+                <p class="text-xs text-gray-400 mt-2">In the system</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <p class="text-gray-500 text-sm font-medium">New Owners (30 Days)</p>
+                <p class="text-3xl font-extrabold text-green-600 mt-2">{{ new_owners_30_days }}</p>
+                <p class="text-xs text-gray-400 mt-2">Recent growth</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 mt-4">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <p class="text-gray-500 text-sm font-medium">New Regular Users (30 Days)</p>
+                <p class="text-3xl font-extrabold text-cyan-600 mt-2">{{ new_users_30_days }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Earning Owners -->
+    {% if top_owners %}
+    <div class="mb-8">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">⭐ Top Earning Owners</h3>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Owner Name</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Username</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Total Earnings</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for item in top_owners %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4">
+                                <span class="font-medium text-gray-900">{{ item.owner.first_name }} {{ item.owner.last_name }}</span>
+                            </td>
+                            <td class="px-6 py-4 text-gray-600">@{{ item.owner.username }}</td>
+                            <td class="px-6 py-4">
+                                <span class="font-bold text-green-600">₹{{ item.total_earnings|floatformat:0 }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+    // Revenue Line Chart
+    const revenueCtx = document.getElementById('revenueChart');
+    if (revenueCtx) {
+        new Chart(revenueCtx, {
+            type: 'bar',
+            data: {
+                labels: [{% for m in revenue_months %}'{{ m }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+                datasets: [
+                    {
+                        label: 'Revenue (₹)',
+                        data: [{% for v in revenue_values %}{{ v }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                        borderColor: '#10b981',
+                        borderWidth: 2,
+                        borderRadius: 6,
+                        order: 2
+                    },
+                    {
+                        label: 'Commission (₹)',
+                        data: [{% for v in commission_values %}{{ v }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                        backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                        borderColor: '#8b5cf6',
+                        borderWidth: 2,
+                        borderRadius: 6,
+                        order: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: { usePointStyle: true, font: { size: 13 } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ctx.dataset.label + ': ₹' + ctx.parsed.y.toLocaleString()
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: val => '₹' + val.toLocaleString()
+                        },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    // Booking Status Pie Chart
+    const bookingCtx = document.getElementById('bookingStatusChart');
+    if (bookingCtx) {
+        const bookingData = {
+            labels: [
+                {% for stat in booking_stats %}'{{ stat.status|title }}'{% if not forloop.last %},{% endif %}{% endfor %}
+            ],
+            datasets: [{
+                data: [
+                    {% for stat in booking_stats %}{{ stat.count }}{% if not forloop.last %},{% endif %}{% endfor %}
+                ],
+                backgroundColor: [
+                    '#10b981', // Completed - green
+                    '#f59e0b', // Pending - amber
+                    '#3b82f6', // Confirmed - blue
+                    '#ef4444'  // Cancelled - red
+                ],
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        };
+
+        new Chart(bookingCtx, {
+            type: 'doughnut',
+            data: bookingData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            font: {
+                                size: 13,
+                                weight: '500'
+                            },
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Car Status Doughnut Chart
+    const carCtx = document.getElementById('carStatusChart');
+    if (carCtx) {
+        const carData = {
+            labels: ['Approved', 'Pending', 'Rejected'],
+            datasets: [{
+                data: [{{ approved_cars }}, {{ pending_cars }}, {{ rejected_cars }}],
+                backgroundColor: [
+                    '#10b981', // Approved - green
+                    '#f59e0b', // Pending - amber
+                    '#ef4444'  // Rejected - red
+                ],
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        };
+
+        new Chart(carCtx, {
+            type: 'doughnut',
+            data: carData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            font: {
+                                size: 13,
+                                weight: '500'
+                            },
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+{% endblock %}

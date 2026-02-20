@@ -95,7 +95,8 @@ class OwnerRevenueService:
         ).aggregate(Sum('amount'))['amount__sum'] or 0
 
         commission_rate = getattr(settings, 'PLATFORM_COMMISSION_RATE', 0.1)
-        commission_total = completed_earnings * commission_rate
+        from decimal import Decimal
+        commission_total = completed_earnings * Decimal(str(commission_rate))
         net_earnings = completed_earnings - commission_total
         
         return {

@@ -15,6 +15,10 @@ from .models import Payment
 
 @login_required
 def payment_checkout(request, hold_id):
+    if request.user.role == 'admin':
+        messages.error(request, 'Admins can only access admin features.')
+        return redirect('admin_dashboard')
+
     hold = get_object_or_404(BookingHold, id=hold_id, user=request.user)
 
     if hold.expires_at < timezone.now():
@@ -71,6 +75,10 @@ def payment_checkout(request, hold_id):
 
 @login_required
 def payment_success(request, booking_id):
+    if request.user.is_superuser or request.user.role == 'admin':
+        messages.error(request, 'Admins can only access admin features.')
+        return redirect('admin_dashboard')
+
     booking = get_object_or_404(Booking, id=booking_id, user=request.user)
 
     return render(request, 'payments/success.html', {
@@ -80,9 +88,13 @@ def payment_success(request, booking_id):
 
 @login_required
 def invoice_pdf(request, booking_id):
+    if request.user.is_superuser or request.user.role == 'admin':
+        messages.error(request, 'Admins can only access admin features.')
+        return redirect('admin_dashboard')
+
     booking = get_object_or_404(Booking, id=booking_id)
 
-    if booking.user != request.user and booking.car.owner != request.user and not request.user.is_superuser:
+    if booking.user != request.user and booking.car.owner != request.user:
         raise Http404
 
     payment = getattr(booking, 'payment', None)

@@ -45,11 +45,16 @@ class OwnerCarMixin(UserPassesTestMixin, LoginRequiredMixin):
     login_url = 'login'
     
     def test_func(self):
-        """Check if user is owner"""
+        """Check if user is owner and not admin or superuser"""
+        if self.request.user.is_superuser or self.request.user.role == 'admin':
+            return False
         return self.request.user.role == 'owner'
     
     def handle_no_permission(self):
         """Redirect if no permission"""
+        if self.request.user.is_superuser or self.request.user.role == 'admin':
+            messages.error(self.request, 'Admins can only access admin features.')
+            return redirect('admin_dashboard')
         messages.error(self.request, 'You must be an owner to access this page.')
         return redirect('car_list')
 

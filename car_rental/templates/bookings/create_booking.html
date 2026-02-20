@@ -177,11 +177,10 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const carId = {{ car.id }
-    };
-    const pricePerDay = {{ car.price_per_day }};
-    let bookedDates = [];
-    let startPicker, endPicker;
+        const carId = {{ car.id }};
+        const pricePerDay = {{ car.price_per_day }};
+        let bookedDates = [];
+        let startPicker, endPicker;
 
     fetch(`/bookings/api/booked-dates/${carId}/`)
         .then(res => res.json())
