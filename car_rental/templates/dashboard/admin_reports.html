@@ -20,26 +20,41 @@
     <!-- Revenue Section -->
     <div class="mb-8">
         <h3 class="text-xl font-bold text-gray-900 mb-4">💰 Revenue</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-4">
+            <!-- Gross Revenue -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-                <p class="text-gray-500 text-sm font-medium">Total Revenue</p>
-                <p class="text-3xl font-extrabold text-green-600 mt-3">₹{{ total_revenue|floatformat:0 }}</p>
-                <p class="text-xs text-gray-400 mt-2">All time earnings</p>
+                <p class="text-gray-500 text-sm font-medium">Gross Revenue</p>
+                <p class="text-3xl font-extrabold text-green-600 mt-3">₹{{ gross_revenue|floatformat:0 }}</p>
+                <p class="text-xs text-gray-400 mt-2">All completed payments</p>
             </div>
+            <!-- Refunds -->
+            <div class="bg-white rounded-2xl shadow-sm border border-red-100 p-6 hover:shadow-md transition-shadow">
+                <p class="text-gray-500 text-sm font-medium">Total Refunded</p>
+                <p class="text-3xl font-extrabold text-red-500 mt-3">− ₹{{ total_refunded|floatformat:0 }}</p>
+                <p class="text-xs text-gray-400 mt-2">{{ refund_count }} refund{{ refund_count|pluralize }} issued</p>
+            </div>
+            <!-- Net Revenue -->
+            <div class="bg-gray-900 rounded-2xl shadow-sm p-6 hover:shadow-md transition-shadow">
+                <p class="text-gray-300 text-sm font-medium">Net Revenue</p>
+                <p class="text-3xl font-extrabold text-white mt-3">₹{{ total_revenue|floatformat:0 }}</p>
+                <p class="text-xs text-gray-400 mt-2">After refund deductions</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-                <p class="text-gray-500 text-sm font-medium">Revenue (Last 30 Days)</p>
+                <p class="text-gray-500 text-sm font-medium">Net Revenue (Last 30 Days)</p>
                 <p class="text-3xl font-extrabold text-blue-600 mt-3">₹{{ revenue_last_30_days|floatformat:0 }}</p>
-                <p class="text-xs text-gray-400 mt-2">Recent earnings</p>
+                <p class="text-xs text-gray-400 mt-2">Completed minus refunds</p>
             </div>
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
                 <p class="text-gray-500 text-sm font-medium">Commission Earned</p>
                 <p class="text-3xl font-extrabold text-purple-600 mt-3">₹{{ commission_earned|floatformat:0 }}</p>
-                <p class="text-xs text-gray-400 mt-2">10% of total revenue</p>
+                <p class="text-xs text-gray-400 mt-2">10% of net revenue</p>
             </div>
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
                 <p class="text-gray-500 text-sm font-medium">Commission (30 Days)</p>
                 <p class="text-3xl font-extrabold text-indigo-600 mt-3">₹{{ commission_30_days|floatformat:0 }}</p>
-                <p class="text-xs text-gray-400 mt-2">Recent commission</p>
+                <p class="text-xs text-gray-400 mt-2">10% of net last 30 days</p>
             </div>
         </div>
         <!-- Revenue Line Chart -->

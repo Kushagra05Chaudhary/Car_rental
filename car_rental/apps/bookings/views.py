@@ -224,10 +224,10 @@ def car_booked_dates(request, car_id):
 
     booked_dates = set()
 
-    # Collect dates from active bookings (pending + confirmed)
+    # Collect dates from confirmed (owner-approved) bookings only
     bookings = Booking.objects.filter(
         car=car,
-        status__in=['pending', 'confirmed'],
+        status='confirmed',
     )
     for booking in bookings:
         current = booking.start_date

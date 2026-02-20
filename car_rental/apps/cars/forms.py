@@ -1,6 +1,20 @@
 from django import forms
 from .models import Car
 
+CAR_TYPE_CHOICES = [
+    ('', 'Select car type'),
+    ('Sedan', 'Sedan'),
+    ('SUV', 'SUV'),
+    ('Hatchback', 'Hatchback'),
+    ('Convertible', 'Convertible'),
+    ('Coupe', 'Coupe'),
+    ('Minivan', 'Minivan'),
+    ('Pickup Truck', 'Pickup Truck'),
+    ('Crossover', 'Crossover'),
+    ('Electric', 'Electric'),
+    ('Luxury', 'Luxury'),
+]
+
 
 class OwnerCarForm(forms.ModelForm):
     """Form for owner to add/edit cars"""
@@ -17,10 +31,12 @@ class OwnerCarForm(forms.ModelForm):
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500',
                 'placeholder': 'Brand (e.g., Honda)'
             }),
-            'car_type': forms.TextInput(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500',
-                'placeholder': 'Car type (e.g., Sedan, SUV)'
-            }),
+            'car_type': forms.Select(
+                choices=CAR_TYPE_CHOICES,
+                attrs={
+                    'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white',
+                }
+            ),
             'location': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500',
                 'placeholder': 'Pickup location'
@@ -41,6 +57,12 @@ class OwnerCarForm(forms.ModelForm):
             }),
         }
     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Show "Select car type" as default for new cars (model default='Sedan' would otherwise pre-select it)
+        if not self.instance.pk:
+            self.fields['car_type'].initial = ''
+
     def clean_image(self):
         """Validate image file"""
         image = self.cleaned_data.get('image')

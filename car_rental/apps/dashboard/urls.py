@@ -25,4 +25,15 @@ urlpatterns = [
     # Reports Section
     path('admin/reports/', views.admin_reports, name='admin_reports'),
     path('admin/reports/download/', views.download_report, name='download_report'),
+
+    # Transactions Section
+    path('admin/transactions/', views.admin_transactions, name='admin_transactions'),
+
+    # All Cars Section
+    path('admin/all-cars/', views.admin_all_cars, name='admin_all_cars'),
+    path('admin/all-cars/<int:pk>/toggle-availability/', views.admin_toggle_car_availability, name='admin_toggle_car_availability'),
+    path('admin/all-cars/<int:pk>/delete/', views.admin_delete_car, name='admin_delete_car'),
+
+    # All Bookings Section
+    path('admin/bookings/', views.admin_all_bookings, name='admin_all_bookings'),
 ]

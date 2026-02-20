@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import Sum, Q
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -19,14 +20,19 @@ def payment_checkout(request, hold_id):
         messages.error(request, 'Admins can only access admin features.')
         return redirect('admin_dashboard')
 
-    hold = get_object_or_404(BookingHold, id=hold_id, user=request.user)
+    try:
+        hold = BookingHold.objects.get(id=hold_id, user=request.user)
+    except BookingHold.DoesNotExist:
+        messages.error(request, 'Your reservation session has expired or is no longer valid. Please select dates again.')
+        return redirect('car_list')
 
     if hold.expires_at < timezone.now():
+        car_id = hold.car.id
         hold.delete()
-        messages.error(request, 'Your reservation expired. Please try again.')
-        return redirect('car_detail', pk=hold.car.id)
+        messages.error(request, 'Your reservation timed out. Please select dates again.')
+        return redirect('car_detail', pk=car_id)
 
-    days = (hold.end_date - hold.start_date).days
+    days = (hold.end_date - hold.start_date).days + 1
     total_price = days * hold.car.price_per_day
 
     if request.method == 'POST':
@@ -84,6 +90,41 @@ def payment_success(request, booking_id):
     return render(request, 'payments/success.html', {
         'booking': booking,
     })
+
+
+@login_required
+def user_transactions(request):
+    """User's own transaction history"""
+    if request.user.role in ('admin',) or request.user.is_superuser:
+        return redirect('admin_dashboard')
+
+    status_filter = request.GET.get('status', '')
+
+    payments = Payment.objects.select_related('booking__car').filter(user=request.user)
+
+    if status_filter:
+        payments = payments.filter(status=status_filter)
+
+    payments = payments.order_by('-created_at')
+
+    from decimal import Decimal
+    totals = Payment.objects.filter(user=request.user)
+    total_spent     = totals.filter(status='completed').aggregate(t=Sum('amount'))['t'] or Decimal('0')
+    total_refunded  = totals.filter(status='refunded').aggregate(t=Sum('amount'))['t'] or Decimal('0')
+    net_spent       = total_spent - total_refunded
+
+    context = {
+        'payments': payments,
+        'total_transactions': totals.count(),
+        'completed_count':    totals.filter(status='completed').count(),
+        'pending_count':      totals.filter(status='pending').count(),
+        'refunded_count':     totals.filter(status='refunded').count(),
+        'total_spent':    total_spent,
+        'total_refunded': total_refunded,
+        'net_spent':      net_spent,
+        'status_filter':  status_filter,
+    }
+    return render(request, 'payments/user_transactions.html', context)
 
 
 @login_required

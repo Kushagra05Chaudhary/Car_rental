@@ -14,10 +14,60 @@ from .models import Car
 # ============ PUBLIC VIEWS ============
 
 def car_list(request):
-    """List all approved and available cars"""
+    """List all approved and available cars with filters"""
+    from django.db.models import Q
+
+    search     = request.GET.get('search', '').strip()
+    car_type   = request.GET.get('car_type', '')
+    location   = request.GET.get('location', '').strip()
+    max_price  = request.GET.get('max_price', '')
+    min_seats  = request.GET.get('min_seats', '')
+    sort       = request.GET.get('sort', 'newest')
+
     cars = Car.objects.filter(status='approved', is_available=True)
+
+    if search:
+        cars = cars.filter(Q(name__icontains=search) | Q(brand__icontains=search))
+    if car_type:
+        cars = cars.filter(car_type__iexact=car_type)
+    if location:
+        cars = cars.filter(location__icontains=location)
+    if max_price:
+        try:
+            cars = cars.filter(price_per_day__lte=int(max_price))
+        except ValueError:
+            pass
+    if min_seats:
+        try:
+            cars = cars.filter(seats__gte=int(min_seats))
+        except ValueError:
+            pass
+
+    sort_map = {
+        'price_asc':  'price_per_day',
+        'price_desc': '-price_per_day',
+        'newest':     '-created_at',
+        'seats':      '-seats',
+    }
+    cars = cars.order_by(sort_map.get(sort, '-created_at'))
+
+    # Distinct locations and types for dropdowns
+    all_locations = Car.objects.filter(status='approved', is_available=True).values_list('location', flat=True).distinct().order_by('location')
+    all_types     = Car.objects.filter(status='approved', is_available=True).values_list('car_type', flat=True).distinct().order_by('car_type')
+    max_db_price  = Car.objects.filter(status='approved', is_available=True).order_by('-price_per_day').values_list('price_per_day', flat=True).first() or 10000
+
     return render(request, 'cars/car_list.html', {
-        'cars': cars
+        'cars': cars,
+        'search':    search,
+        'car_type':  car_type,
+        'location':  location,
+        'max_price': max_price or int(max_db_price),
+        'min_seats': min_seats,
+        'sort':      sort,
+        'all_locations': all_locations,
+        'all_types':     all_types,
+        'max_db_price':  int(max_db_price),
+        'active_filters': any([search, car_type, location, max_price, min_seats]),
     })
 
 def car_detail(request, pk):

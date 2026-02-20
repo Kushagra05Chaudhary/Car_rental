@@ -206,7 +206,7 @@ class UserBookingService:
         return holds.exists()
 
     @staticmethod
-    def create_hold(user, car, start_date, end_date, hold_minutes=5):
+    def create_hold(user, car, start_date, end_date, hold_minutes=15):
         """Create a reservation hold for payment window."""
         UserBookingService.clear_expired_holds()
 
