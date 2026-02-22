@@ -74,10 +74,12 @@
                         class="w-full flex items-center justify-center bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition-all shadow-lg">
                         📋 View My Bookings
                     </a>
-                    <a href="{% url 'invoice_pdf' booking.id %}"
+                    {% if booking.payment %}
+                    <a href="{% url 'download_invoice' booking.payment.id %}"
                         class="w-full flex items-center justify-center border-2 border-gray-300 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-50 transition-all">
                         📄 Download Invoice
                     </a>
+                    {% endif %}
                 </div>
             </div>
         </div>

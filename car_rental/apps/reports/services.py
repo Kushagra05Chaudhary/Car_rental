@@ -12,16 +12,24 @@ class OwnerRevenueService:
     
     @staticmethod
     def get_total_earnings(owner):
-        """Get total earnings for owner from completed bookings"""
+        """
+        Total earnings visible to the owner.
+
+        Money is only counted once the owner has confirmed the booking
+        (status 'confirmed', 'ongoing', or 'completed').  Payments for
+        bookings still in 'pending' state (user paid but owner hasn't
+        decided yet) are held by admin and NOT shown here.
+        """
         from apps.payments.models import Payment
-        
+
         owner_cars = Car.objects.filter(owner=owner)
-        completed_payments = Payment.objects.filter(
+        confirmed_payments = Payment.objects.filter(
             booking__car__in=owner_cars,
-            status='completed'
+            booking__status__in=['confirmed', 'ongoing', 'completed'],
+            status='completed',
         )
-        
-        total = completed_payments.aggregate(Sum('amount'))['amount__sum'] or 0
+
+        total = confirmed_payments.aggregate(Sum('amount'))['amount__sum'] or 0
         return total
     
     @staticmethod

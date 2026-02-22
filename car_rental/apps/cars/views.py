@@ -14,8 +14,16 @@ from .models import Car
 # ============ PUBLIC VIEWS ============
 
 def car_list(request):
-    """List all approved and available cars with filters"""
-    from django.db.models import Q
+    """List all approved and available cars with filters.
+
+    Cars with any active booking (confirmed / ongoing / pending+paid) are
+    always hidden from users.  When start_date + end_date are supplied the
+    date-overlap filter is also applied so only cars free for those specific
+    dates are shown.
+    """
+    from django.db.models import Q, Exists, OuterRef
+    from datetime import datetime
+    from apps.bookings.models import Booking
 
     search     = request.GET.get('search', '').strip()
     car_type   = request.GET.get('car_type', '')
@@ -23,8 +31,25 @@ def car_list(request):
     max_price  = request.GET.get('max_price', '')
     min_seats  = request.GET.get('min_seats', '')
     sort       = request.GET.get('sort', 'newest')
+    start_date_str = request.GET.get('start_date', '').strip()
+    end_date_str   = request.GET.get('end_date', '').strip()
 
-    cars = Car.objects.filter(status='approved', is_available=True)
+    # ── Always exclude cars with any currently-active booking ────────
+    # A booking is "active/blocking" when:
+    #   • status is confirmed or ongoing, OR
+    #   • status is pending and payment_status is paid (money received,
+    #     awaiting owner decision — car is already committed)
+    blocking_booking = Booking.objects.filter(
+        car=OuterRef('pk'),
+    ).filter(
+        Q(status__in=['confirmed', 'ongoing']) |
+        Q(status='pending', payment_status='paid')
+    )
+
+    cars = Car.objects.filter(
+        status='approved',
+        is_available=True,
+    ).exclude(Exists(blocking_booking))
 
     if search:
         cars = cars.filter(Q(name__icontains=search) | Q(brand__icontains=search))
@@ -43,6 +68,22 @@ def car_list(request):
         except ValueError:
             pass
 
+    # ── Date-range availability filter ──────────────────────────────
+    date_filter_active = False
+    start_date = end_date = None
+
+    if start_date_str and end_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date   = datetime.strptime(end_date_str,   '%Y-%m-%d').date()
+            if start_date <= end_date:
+                # Exclude cars that have a CONFIRMED or ONGOING booking
+                # overlapping the requested date range.
+                cars = Booking.get_available_cars(start_date, end_date, base_queryset=cars)
+                date_filter_active = True
+        except ValueError:
+            pass  # silently ignore malformed dates
+
     sort_map = {
         'price_asc':  'price_per_day',
         'price_desc': '-price_per_day',
@@ -51,10 +92,14 @@ def car_list(request):
     }
     cars = cars.order_by(sort_map.get(sort, '-created_at'))
 
-    # Distinct locations and types for dropdowns
-    all_locations = Car.objects.filter(status='approved', is_available=True).values_list('location', flat=True).distinct().order_by('location')
-    all_types     = Car.objects.filter(status='approved', is_available=True).values_list('car_type', flat=True).distinct().order_by('car_type')
-    max_db_price  = Car.objects.filter(status='approved', is_available=True).order_by('-price_per_day').values_list('price_per_day', flat=True).first() or 10000
+    # Distinct values for filter dropdowns (always from the full approved pool)
+    base_approved = Car.objects.filter(status='approved', is_available=True)
+    all_locations = base_approved.values_list('location', flat=True).distinct().order_by('location')
+    all_types     = base_approved.values_list('car_type', flat=True).distinct().order_by('car_type')
+    max_db_price  = (
+        base_approved.order_by('-price_per_day')
+        .values_list('price_per_day', flat=True).first() or 10000
+    )
 
     return render(request, 'cars/car_list.html', {
         'cars': cars,
@@ -67,21 +112,34 @@ def car_list(request):
         'all_locations': all_locations,
         'all_types':     all_types,
         'max_db_price':  int(max_db_price),
-        'active_filters': any([search, car_type, location, max_price, min_seats]),
+        'active_filters': any([search, car_type, location, max_price, min_seats, date_filter_active]),
+        # Pass dates back so the form can retain values
+        'start_date': start_date_str,
+        'end_date':   end_date_str,
+        'date_filter_active': date_filter_active,
     })
 
 def car_detail(request, pk):
     """View car details"""
-    car = get_object_or_404(
-        Car,
-        pk=pk,
-        status='approved'
-    )
+    from django.db.models import Q, Exists, OuterRef
+    from apps.bookings.models import Booking
+
+    car = get_object_or_404(Car, pk=pk, status='approved')
+
+    # Check whether this car has any blocking booking right now
+    is_booked = Booking.objects.filter(
+        car=car,
+    ).filter(
+        Q(status__in=['confirmed', 'ongoing']) |
+        Q(status='pending', payment_status='paid')
+    ).exists()
+
     reviews = Review.objects.filter(car=car).select_related('user').order_by('-created_at')
     rating_average = reviews.aggregate(avg=Avg('rating'))['avg']
 
     return render(request, 'cars/car_detail.html', {
         'car': car,
+        'is_booked': is_booked,
         'reviews': reviews,
         'rating_average': rating_average,
         'rating_count': reviews.count(),
@@ -115,21 +173,35 @@ class OwnerCarListView(OwnerCarMixin, ListView):
     template_name = 'cars/owner_car_list.html'
     context_object_name = 'cars'
     paginate_by = 10
-    
+
     def get_queryset(self):
-        """Filter cars by current owner"""
-        return Car.objects.filter(owner=self.request.user).order_by('-created_at')
-    
+        """Filter cars by owner and annotate each with its active-booking count."""
+        from django.db.models import Count, Q, OuterRef, Exists, Subquery
+        from apps.bookings.models import Booking
+
+        # Subquery: does this car have at least one blocking booking?
+        blocking_booking = Booking.objects.filter(
+            car=OuterRef('pk'),
+        ).filter(
+            Q(status__in=['confirmed', 'ongoing']) |
+            Q(status='pending', payment_status='paid')
+        )
+
+        return (
+            Car.objects.filter(owner=self.request.user)
+            .annotate(has_active_booking=Exists(blocking_booking))
+            .order_by('-created_at')
+        )
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         cars = self.get_queryset()
-        
-        # Add statistics
-        context['total_cars'] = cars.count()
-        context['active_cars'] = cars.filter(is_available=True).count()
-        context['pending_cars'] = cars.filter(status='pending').count()
+
+        context['total_cars']    = cars.count()
+        context['active_cars']   = cars.filter(is_available=True).count()
+        context['pending_cars']  = cars.filter(status='pending').count()
         context['approved_cars'] = cars.filter(status='approved').count()
-        
+
         return context
 
 

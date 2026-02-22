@@ -172,15 +172,26 @@ class UserBookingListView(UserBookingMixin, ListView):
         return context
 
 
-class UserBookingDetailView(UserBookingMixin, DetailView):
-    """View booking details for user"""
+class UserBookingDetailView(LoginRequiredMixin, DetailView):
+    """View booking details for user — only the booking owner may access it."""
     model = Booking
     template_name = 'bookings/user_booking_detail.html'
     context_object_name = 'booking'
-    
-    def get_queryset(self):
-        """Ensure user can only view their bookings"""
-        return Booking.objects.filter(user=self.request.user)
+    login_url = 'login'
+
+    def get_object(self, queryset=None):
+        """Return the booking only if it belongs to the logged-in user."""
+        booking = get_object_or_404(Booking, pk=self.kwargs['pk'])
+        if booking.user != self.request.user:
+            raise Http404("Booking not found.")
+        return booking
+
+    def get(self, request, *args, **kwargs):
+        """Block admins and superusers from user views."""
+        if request.user.is_superuser or request.user.role == 'admin':
+            messages.error(request, 'Admins can only access admin features.')
+            return redirect('admin_dashboard')
+        return super().get(request, *args, **kwargs)
 
 
 @login_required
@@ -202,18 +213,21 @@ def create_booking(request, car_id):
             messages.error(request, 'Please provide valid dates.')
             return render(request, 'bookings/create_booking.html', {'car': car})
 
-        if end <= start:
-            messages.error(request, 'End date must be after start date.')
+        if end < start:
+            messages.error(request, 'End date must be same as or after start date.')
             return render(request, 'bookings/create_booking.html', {'car': car})
 
         if UserBookingService.has_conflicts(car, start, end, exclude_user=request.user):
             messages.error(request, 'This car is already reserved for the selected dates.')
             return render(request, 'bookings/create_booking.html', {'car': car})
 
-        hold_minutes = getattr(settings, 'BOOKING_HOLD_MINUTES', 5)
+        hold_minutes = getattr(settings, 'BOOKING_HOLD_MINUTES', 10)
         hold = UserBookingService.create_hold(request.user, car, start, end, hold_minutes=hold_minutes)
 
-        return redirect('payment_checkout', hold_id=hold.id)
+        # Do NOT create a Booking here — the booking is only created after
+        # the user actually completes payment (in initiate_payment / payment_success).
+        # Until then only the Hold exists, so abandoned checkouts leave no DB clutter.
+        return redirect('razorpay_checkout_hold', hold_id=hold.id)
 
     return render(request, 'bookings/create_booking.html', {'car': car})
 
@@ -224,10 +238,14 @@ def car_booked_dates(request, car_id):
 
     booked_dates = set()
 
-    # Collect dates from confirmed (owner-approved) bookings only
+    # Collect dates from blocking bookings:
+    # confirmed, ongoing, or pending-with-payment-received
+    from django.db.models import Q
     bookings = Booking.objects.filter(
         car=car,
-        status='confirmed',
+    ).filter(
+        Q(status__in=['confirmed', 'ongoing']) |
+        Q(status='pending', payment_status='paid')
     )
     for booking in bookings:
         current = booking.start_date

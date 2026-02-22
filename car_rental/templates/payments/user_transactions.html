@@ -115,7 +115,7 @@
                     </div>
 
                     {% if payment.status == 'completed' %}
-                    <a href="{% url 'invoice_pdf' payment.booking.id %}"
+                    <a href="{% url 'download_invoice' payment.id %}"
                         class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition-all">
                         📄 Invoice
                     </a>

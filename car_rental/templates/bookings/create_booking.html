@@ -209,10 +209,9 @@
             ...commonConfig,
             onChange: function (selectedDates) {
                 if (selectedDates.length > 0) {
-                    const nextDay = new Date(selectedDates[0]);
-                    nextDay.setDate(nextDay.getDate() + 1);
-                    endPicker.set('minDate', nextDay);
-                    if (endPicker.selectedDates.length > 0 && endPicker.selectedDates[0] <= selectedDates[0]) {
+                    // Allow same day as end date (for 1-day rentals)
+                    endPicker.set('minDate', selectedDates[0]);
+                    if (endPicker.selectedDates.length > 0 && endPicker.selectedDates[0] < selectedDates[0]) {
                         endPicker.clear();
                     }
                 }

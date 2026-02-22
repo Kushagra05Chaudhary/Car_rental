@@ -39,6 +39,18 @@ class Car(models.Model):
     def __str__(self):
         return self.name
 
+    def is_available_for_dates(self, start_date, end_date):
+        """
+        Return True if this car has no CONFIRMED or ONGOING booking
+        that overlaps with [start_date, end_date].
+
+        Uses the same Allen-interval overlap formula used by
+        BookingQuerySet.blocking_for_dates — kept in sync automatically
+        because both call Booking.has_conflict under the hood.
+        """
+        from apps.bookings.models import Booking
+        return not Booking.has_conflict(self, start_date, end_date)
+
     def save(self, *args, **kwargs):
         """Auto-generate a 400x300 JPEG thumbnail when image changes."""
         # Detect if image has changed

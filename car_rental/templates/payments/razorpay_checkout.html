@@ -1,0 +1,328 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Razorpay Checkout - aSk.ren{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Confirm Your Booking</h1>
+            <p class="text-gray-600">Review details and complete payment</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- LEFT: Booking Summary -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- Vehicle Card -->
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
+                    <div class="h-48 bg-gradient-to-br from-gray-200 to-gray-300 overflow-hidden">
+                        {% if hold.car.image %}
+                            <img src="{{ hold.car.image.url }}" alt="{{ hold.car.name }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <div class="w-full h-full flex items-center justify-center text-6xl opacity-30">🚗</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="p-6">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ hold.car.name }}</h2>
+                        <p class="text-gray-600 mb-4">{{ hold.car.brand }} • {{ hold.car.car_type }} • {{ hold.car.seats }} seats</p>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-blue-50 rounded-lg p-4">
+                                <p class="text-sm text-gray-600 font-medium mb-1">📍 Location</p>
+                                <p class="font-bold text-gray-900">{{ hold.car.location }}</p>
+                            </div>
+                            <div class="bg-green-50 rounded-lg p-4">
+                                <p class="text-sm text-gray-600 font-medium mb-1">💰 Rate</p>
+                                <p class="font-bold text-gray-900">₹{{ hold.car.price_per_day }}/day</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Booking Dates -->
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">📅 Booking Dates</h3>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-4 border border-indigo-200">
+                            <p class="text-sm text-indigo-600 font-semibold mb-2">Check-in</p>
+                            <p class="text-2xl font-bold text-indigo-900">{{ hold.start_date|date:"M d" }}</p>
+                            <p class="text-xs text-indigo-600 mt-1">{{ hold.start_date|date:"l" }}</p>
+                        </div>
+
+                        <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
+                            <p class="text-sm text-purple-600 font-semibold mb-2">Check-out</p>
+                            <p class="text-2xl font-bold text-purple-900">{{ hold.end_date|date:"M d" }}</p>
+                            <p class="text-xs text-purple-600 mt-1">{{ hold.end_date|date:"l" }}</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                        <p class="text-sm text-amber-800">
+                            <strong>Total Duration:</strong> {{ days }} day{{ days|pluralize }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Terms & Conditions -->
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">✓ Terms & Conditions</h3>
+
+                    <div class="space-y-3 text-sm text-gray-600">
+                        <div class="flex gap-3">
+                            <input type="checkbox" id="terms" class="mt-1" required>
+                            <label for="terms" class="leading-relaxed">
+                                I agree to the <a href="#" class="text-blue-600 hover:underline">Terms of Service</a> and <a href="#" class="text-blue-600 hover:underline">Privacy Policy</a>
+                            </label>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <input type="checkbox" id="cancellation" class="mt-1" required>
+                            <label for="cancellation" class="leading-relaxed">
+                                I understand the <a href="#" class="text-blue-600 hover:underline">Cancellation Policy</a>
+                            </label>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <input type="checkbox" id="insurance" class="mt-1">
+                            <label for="insurance" class="leading-relaxed">
+                                I want to add optional insurance (₹500)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: Price Summary & Payment Button -->
+            <div class="lg:col-span-1">
+                <div class="sticky top-24 bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-6">💳 Price Summary</h3>
+
+                    <div class="space-y-3 mb-6 pb-6 border-b border-gray-200">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Base Fare</span>
+                            <span class="font-semibold text-gray-900">₹{{ subtotal }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Days: {{ days }}</span>
+                            <span class="font-semibold text-gray-900">× ₹{{ hold.car.price_per_day }}</span>
+                        </div>
+                        {% if gst %}
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">GST (18%)</span>
+                            <span class="font-semibold text-gray-900">₹{{ gst }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-4 mb-6">
+                        <p class="text-gray-300 text-sm font-medium mb-1">Total Amount</p>
+                        <p class="text-4xl font-bold text-white">₹{{ total_price }}</p>
+                    </div>
+
+                    <!-- Razorpay Checkout Button -->
+                    <button
+                        id="razorpay-button"
+                        onclick="openRazorpayCheckout()"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                        💳 Pay ₹{{ total_price }}
+                    </button>
+
+                    <p class="text-xs text-gray-500 text-center mt-4">
+                        Secured by <strong>Razorpay</strong>
+                    </p>
+
+                    <!-- Safety Badge -->
+                    <div class="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                        <p class="text-xs text-green-700">
+                            ✓ <strong>SSL Encrypted</strong><br>
+                            ✓ <strong>PCI Compliant</strong><br>
+                            ✓ <strong>100% Secure</strong>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    // Values injected from Django template
+    const RAZORPAY_KEY_ID  = "{{ razorpay_key }}";
+    const HOLD_ID          = Number("{{ hold.id }}");
+    const BOOKING_AMOUNT   = Number("{{ total_price }}");
+    const CSRF_TOKEN       = "{{ csrf_token }}";
+
+    async function initiatePayment() {
+        try {
+            const response = await fetch('/payments/initiate-payment/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': CSRF_TOKEN,
+                },
+                body: JSON.stringify({
+                    hold_id: HOLD_ID,   // Booking is created server-side from the Hold
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to create order');
+            }
+
+            return {
+                orderId:  data.order_id,
+                amount:   data.amount,
+                keyId:    data.key_id,
+                bookingId: data.booking_id,
+            };
+        } catch (error) {
+            console.error('Error initiating payment:', error);
+            alert('Failed to initiate payment: ' + error.message);
+            throw error;
+        }
+    }
+
+    async function openRazorpayCheckout() {
+        const button = document.getElementById('razorpay-button');
+        button.disabled = true;
+        button.innerHTML = '⏳ Processing...';
+
+        try {
+            // Validate checkboxes
+            if (!document.getElementById('terms').checked) {
+                alert('Please accept the Terms of Service');
+                button.disabled = false;
+                button.innerHTML = '💳 Pay ₹' + BOOKING_AMOUNT;
+                return;
+            }
+
+            if (!document.getElementById('cancellation').checked) {
+                alert('Please accept the Cancellation Policy');
+                button.disabled = false;
+                button.innerHTML = '💳 Pay ₹' + BOOKING_AMOUNT;
+                return;
+            }
+
+            // Create Booking + Razorpay order
+            const paymentDetails = await initiatePayment();
+
+            // Razorpay options
+            const options = {
+                key:       paymentDetails.keyId,
+                amount:    Math.round(paymentDetails.amount * 100), // paise
+                currency:  'INR',
+                order_id:  paymentDetails.orderId,
+                name:      'aSk.ren',
+                description: `Booking for {{ hold.car.name }}`,
+                image:     '{% static "images/logo.png" %}',
+
+                handler: function(response) {
+                    handlePaymentSuccess(response);
+                },
+
+                prefill: {
+                    email:   "{{ user.email }}",
+                    contact: "{{ user_phone }}",
+                },
+
+                notes: {
+                    hold_id:    HOLD_ID,
+                    user_email: "{{ user.email }}",
+                },
+
+                theme: { color: '#3b82f6' },
+
+                modal: {
+                    // User closed the modal without paying — re-enable button
+                    // The booking created in initiate_payment will be cleaned up
+                    // by payment_failure or by the stale-booking cleanup task.
+                    ondismiss: function() {
+                        button.disabled = false;
+                        button.innerHTML = '💳 Pay ₹' + BOOKING_AMOUNT;
+                    }
+                }
+            };
+
+            const rzp = new Razorpay(options);
+            rzp.open();
+
+            rzp.on('payment.failed', function(response) {
+                handlePaymentFailure(response.error, paymentDetails.orderId);
+            });
+
+        } catch (error) {
+            button.disabled = false;
+            button.innerHTML = '💳 Pay ₹' + BOOKING_AMOUNT;
+            console.error('Error:', error);
+        }
+    }
+
+    async function handlePaymentSuccess(response) {
+        try {
+            const verifyResponse = await fetch('/payments/success/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': CSRF_TOKEN,
+                },
+                body: JSON.stringify({
+                    razorpay_order_id:   response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature:  response.razorpay_signature,
+                }),
+            });
+
+            const result = await verifyResponse.json();
+
+            if (result.success) {
+                window.location.href = result.redirect_url;
+            } else {
+                throw new Error(result.error || 'Verification failed');
+            }
+
+        } catch (error) {
+            alert('Payment verification failed: ' + error.message);
+            console.error('Verification error:', error);
+        }
+    }
+
+    async function handlePaymentFailure(error, knownOrderId) {
+        const orderId = error.metadata?.order_id || knownOrderId || 'unknown';
+        try {
+            const failResponse = await fetch('/payments/failure/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': CSRF_TOKEN,
+                },
+                body: JSON.stringify({
+                    razorpay_order_id:   orderId,
+                    error_code:          error.code,
+                    error_description:   error.description,
+                }),
+            });
+
+            const failResult = await failResponse.json();
+            if (failResult.redirect_url) {
+                window.location.href = failResult.redirect_url;
+                return;
+            }
+        } catch (e) {
+            console.error('Error reporting payment failure:', e);
+        }
+
+        alert('Payment failed: ' + (error.description || 'Unknown error') + '\nPlease try again.');
+        location.reload();
+    }
+</script>
+
+{% endblock %}

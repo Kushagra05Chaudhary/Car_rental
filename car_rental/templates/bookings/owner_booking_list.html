@@ -133,9 +133,27 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4">
-                                <a href="{% url 'owner_booking_detail' booking.id %}" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-lg">
-                                    👁️ View Details
-                                </a>
+                                <div class="flex gap-2">
+                                    <a href="{% url 'owner_booking_detail' booking.id %}" class="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-lg text-sm">
+                                        👁️ View
+                                    </a>
+                                    
+                                    {% if booking.status == 'pending' %}
+                                        <form method="POST" action="{% url 'accept_booking' booking.id %}" class="inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="inline-flex items-center gap-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-lg text-sm">
+                                                ✓ Accept
+                                            </button>
+                                        </form>
+                                        
+                                        <form method="POST" action="{% url 'reject_booking' booking.id %}" class="inline" onsubmit="return confirm('Are you sure you want to reject this booking?')">
+                                            {% csrf_token %}
+                                            <button type="submit" class="inline-flex items-center gap-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-lg text-sm">
+                                                ✕ Reject
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}

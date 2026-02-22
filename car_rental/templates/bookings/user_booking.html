@@ -92,7 +92,7 @@
                 <!-- Actions -->
                 <div class="flex flex-col justify-end space-y-3">
                     {% if booking.payment and booking.payment.status == "completed" %}
-                        <a href="{% url 'invoice_pdf' booking.id %}" class="w-full btn-primary text-center py-2 px-4 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
+                        <a href="{% url 'download_invoice' booking.payment.id %}" class="w-full btn-primary text-center py-2 px-4 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
                             📄 Download Invoice
                         </a>
                     {% endif %}

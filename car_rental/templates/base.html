@@ -267,6 +267,7 @@
             background-attachment: fixed;
         }
     </style>
+    {% block extra_css %}{% endblock %}
 </head>
 
 <body class="text-slate-900 antialiased selection:bg-blue-100 selection:text-blue-900">
@@ -548,6 +549,7 @@
             }, duration);
         }
     </script>
+    {% block extra_js %}{% endblock %}
 </body>
 
 </html>

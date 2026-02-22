@@ -1,0 +1,15 @@
+{
+    // Disable VS Code's built-in JS/CSS validators inside HTML files.
+    // Django template tags ({{ }}, {% %}) look like invalid JS/CSS syntax to
+    // these linters even though Django renders them server-side before the
+    // browser ever sees the file.
+    "html.validate.scripts": false,
+    "html.validate.styles": false,
+
+    // Silence "Unknown at rule @apply" — these are valid Tailwind CSS directives
+    // that the standard CSS linter doesn't recognise.
+    "css.lint.unknownAtRules": "ignore",
+
+    // Keep CSS validation on for standalone .css files (only HTML is affected).
+    "css.validate": true
+}

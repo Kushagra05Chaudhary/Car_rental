@@ -3,14 +3,19 @@
 
 {% block title %}My Cars - Owner Dashboard{% endblock %}
 
-{% block extra_css %}
-<style>
+{% block extra_css %}{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
     {% for car in cars %}
-    .car-card-{{ forloop.counter }} {
-        animation-delay: {{ forloop.counter|add:3 }}00ms;
-    }
+    (function () {
+        var el = document.querySelector('.car-card-{{ forloop.counter }}');
+        if (el) { el.style.animationDelay = '{{ forloop.counter|add:3 }}00ms'; }
+    }());
     {% endfor %}
-</style>
+});
+</script>
 {% endblock %}
 
 {% block content %}
@@ -128,8 +133,13 @@
                             </span>
 
                             <!-- Availability Badge -->
-                            <span class="absolute top-4 left-4 px-4 py-2 rounded-full text-xs font-bold text-white {% if car.is_available %}bg-green-600{% else %}bg-gray-600{% endif %}">
-                                {% if car.is_available %}Available{% else %}Unavailable{% endif %}
+                            <span class="absolute top-4 left-4 px-4 py-2 rounded-full text-xs font-bold text-white
+                                {% if car.has_active_booking %}bg-red-600
+                                {% elif car.is_available %}bg-green-600
+                                {% else %}bg-gray-600{% endif %}">
+                                {% if car.has_active_booking %}Booked
+                                {% elif car.is_available %}Available
+                                {% else %}Unavailable{% endif %}
                             </span>
                         </div>
 
@@ -143,8 +153,12 @@
                                 </div>
                                 <!-- Availability pill -->
                                 <span class="shrink-0 mt-0.5 px-2.5 py-1 rounded-full text-xs font-bold
-                                    {% if car.is_available %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-500{% endif %}">
-                                    {% if car.is_available %}● Available{% else %}○ Unavailable{% endif %}
+                                    {% if car.has_active_booking %}bg-red-100 text-red-700
+                                    {% elif car.is_available %}bg-green-100 text-green-700
+                                    {% else %}bg-gray-100 text-gray-500{% endif %}">
+                                    {% if car.has_active_booking %}&#x25CF; Booked
+                                    {% elif car.is_available %}&bull; Available
+                                    {% else %}&#x25CB; Unavailable{% endif %}
                                 </span>
                             </div>
 

@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payment Dashboard - Admin{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-slate-800 to-slate-900 text-white px-8 py-8 border-b border-white/10">
+        <div class="max-w-7xl mx-auto">
+            <h1 class="text-3xl font-extrabold tracking-tight">💳 Payment Management</h1>
+            <p class="text-slate-300 mt-2">Monitor transactions, refunds, and revenue</p>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            
+            <!-- Total Revenue -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Gross Revenue</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">₹{{ total_revenue|default:"0" }}</p>
+                    </div>
+                    <div class="text-4xl opacity-20">💰</div>
+                </div>
+            </div>
+
+            <!-- Total Refunded -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Total Refunded</p>
+                        <p class="text-3xl font-bold text-red-600 mt-2">− ₹{{ total_refunded|default:"0" }}</p>
+                    </div>
+                    <div class="text-4xl opacity-20">↩️</div>
+                </div>
+            </div>
+
+            <!-- Net Revenue -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Net Revenue</p>
+                        <p class="text-3xl font-bold text-green-600 mt-2">₹{{ net_revenue|default:"0" }}</p>
+                    </div>
+                    <div class="text-4xl opacity-20">📈</div>
+                </div>
+            </div>
+
+            <!-- Total Payments -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Total Payments</p>
+                        <p class="text-3xl font-bold text-blue-600 mt-2">{{ total_payments|default:"0" }}</p>
+                    </div>
+                    <div class="text-4xl opacity-20">📊</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Breakdown -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+                <p class="text-sm text-gray-600 font-medium">Pending</p>
+                <p class="text-2xl font-bold text-amber-600 mt-1">{{ status_counts.pending }}</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+                <p class="text-sm text-gray-600 font-medium">Completed</p>
+                <p class="text-2xl font-bold text-green-600 mt-1">{{ status_counts.completed }}</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+                <p class="text-sm text-gray-600 font-medium">Failed</p>
+                <p class="text-2xl font-bold text-red-600 mt-1">{{ status_counts.failed }}</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+                <p class="text-sm text-gray-600 font-medium">Refunded</p>
+                <p class="text-2xl font-bold text-blue-600 mt-1">{{ status_counts.refunded }}</p>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">🔍 Filters</h3>
+            <form method="GET" class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                
+                <!-- Status Filter -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Status</label>
+                    <select name="status" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">All Status</option>
+                        <option value="pending" {% if status_filter == "pending" %}selected{% endif %}>Pending</option>
+                        <option value="completed" {% if status_filter == "completed" %}selected{% endif %}>Completed</option>
+                        <option value="failed" {% if status_filter == "failed" %}selected{% endif %}>Failed</option>
+                        <option value="refunded" {% if status_filter == "refunded" %}selected{% endif %}>Refunded</option>
+                    </select>
+                </div>
+
+                <!-- Date From -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">From Date</label>
+                    <input type="date" name="date_from" value="{{ date_from }}" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+
+                <!-- Date To -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">To Date</label>
+                    <input type="date" name="date_to" value="{{ date_to }}" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+
+                <!-- Payment Method -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Method</label>
+                    <select name="method" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">All Methods</option>
+                        <option value="razorpay" {% if method_filter == "razorpay" %}selected{% endif %}>Razorpay</option>
+                    </select>
+                </div>
+
+                <!-- Search Button -->
+                <div class="flex items-end">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-all">
+                        🔍 Search
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Payments Table -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-50 border-b border-gray-100">
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wide">Invoice ID</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wide">User</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wide">Car</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wide">Amount</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wide">Status</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wide">Payment ID</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wide">Date</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wide">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 text-sm font-semibold text-gray-900">INV-{{ payment.id|stringformat:"06d" }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">
+                                {{ payment.user.first_name|default:payment.user.username }}<br>
+                                <span class="text-xs text-gray-500">{{ payment.user.email }}</span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-600">
+                                <strong>{{ payment.booking.car.name }}</strong><br>
+                                <span class="text-xs text-gray-500">{{ payment.booking.start_date|date:"M d" }} - {{ payment.booking.end_date|date:"M d" }}</span>
+                            </td>
+                            <td class="px-6 py-4 text-sm font-bold text-gray-900">₹{{ payment.amount }}</td>
+                            <td class="px-6 py-4 text-sm">
+                                <span class="inline-block px-3 py-1 rounded-full text-xs font-bold
+                                    {% if payment.status == "completed" %}bg-green-100 text-green-700
+                                    {% elif payment.status == "pending" %}bg-amber-100 text-amber-700
+                                    {% elif payment.status == "failed" %}bg-red-100 text-red-700
+                                    {% elif payment.status == "refunded" %}bg-blue-100 text-blue-700
+                                    {% endif %}">
+                                    {{ payment.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-xs text-gray-500 font-mono">{{ payment.razorpay_payment_id|default:"—"|truncatewords:2 }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">{{ payment.created_at|date:"M d, Y" }}</td>
+                            <td class="px-6 py-4">
+                                {% if payment.status == "completed" %}
+                                <form method="POST" action="/payments/admin/refund/{{ payment.id }}/" class="inline" onsubmit="return confirm('Refund ₹{{ payment.amount }}?');">
+                                    {% csrf_token %}
+                                    <textarea name="reason" placeholder="Refund reason..." class="hidden"></textarea>
+                                    <button type="submit" class="text-red-600 hover:text-red-800 font-semibold text-sm">
+                                        ↩️ Refund
+                                    </button>
+                                </form>
+                                {% else %}
+                                <span class="text-gray-400 text-xs">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                                <div class="text-4xl mb-2 opacity-20">📭</div>
+                                <p class="font-medium">No payments found</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
