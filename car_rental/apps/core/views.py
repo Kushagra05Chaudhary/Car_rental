@@ -4,7 +4,7 @@ from apps.cars.models import Car
 # Create your views here.
 
 def home(request):
-    cars = Car.objects.filter(status="approved")
+    cars = Car.objects.filter(status="approved", is_available=True)
 
     location = request.GET.get("location")
     if location:

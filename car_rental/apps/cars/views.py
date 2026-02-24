@@ -1,4 +1,6 @@
-from django.db.models import Avg
+from datetime import datetime
+
+from django.db.models import Avg, Exists, OuterRef, Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -6,6 +8,7 @@ from django.views.generic import ListView, CreateView, UpdateView, DeleteView, D
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 from django.urls import reverse_lazy
 from apps.accounts.decorators import role_required
+from apps.bookings.models import Booking
 from apps.reviews.models import Review
 from .forms import OwnerCarForm
 from .models import Car
@@ -21,10 +24,6 @@ def car_list(request):
     date-overlap filter is also applied so only cars free for those specific
     dates are shown.
     """
-    from django.db.models import Q, Exists, OuterRef
-    from datetime import datetime
-    from apps.bookings.models import Booking
-
     search     = request.GET.get('search', '').strip()
     car_type   = request.GET.get('car_type', '')
     location   = request.GET.get('location', '').strip()
@@ -121,9 +120,6 @@ def car_list(request):
 
 def car_detail(request, pk):
     """View car details"""
-    from django.db.models import Q, Exists, OuterRef
-    from apps.bookings.models import Booking
-
     car = get_object_or_404(Car, pk=pk, status='approved')
 
     # Check whether this car has any blocking booking right now
@@ -176,9 +172,6 @@ class OwnerCarListView(OwnerCarMixin, ListView):
 
     def get_queryset(self):
         """Filter cars by owner and annotate each with its active-booking count."""
-        from django.db.models import Count, Q, OuterRef, Exists, Subquery
-        from apps.bookings.models import Booking
-
         # Subquery: does this car have at least one blocking booking?
         blocking_booking = Booking.objects.filter(
             car=OuterRef('pk'),
@@ -195,13 +188,12 @@ class OwnerCarListView(OwnerCarMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        cars = self.get_queryset()
-
+        # object_list is the full annotated queryset from get_queryset
+        cars = self.object_list
         context['total_cars']    = cars.count()
         context['active_cars']   = cars.filter(is_available=True).count()
         context['pending_cars']  = cars.filter(status='pending').count()
         context['approved_cars'] = cars.filter(status='approved').count()
-
         return context
 
 

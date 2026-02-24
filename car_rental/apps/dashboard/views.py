@@ -1,11 +1,20 @@
+from datetime import datetime as dt, timedelta
+from decimal import Decimal
+from io import BytesIO
+
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import cm
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse
-from django.db.models import Count, Sum, Q, F
+from django.db.models import Count, Sum, Q
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
-from datetime import timedelta
 from apps.accounts.decorators import role_required
 from apps.accounts.models import CustomUser, OwnerRequest
 from apps.cars.models import Car
@@ -44,17 +53,17 @@ def admin_car_approval(request):
 @login_required
 @role_required('admin')
 def approve_car(request, pk):
-    car = Car.objects.get(pk=pk)
+    car = get_object_or_404(Car, pk=pk)
     car.status = 'approved'
-    car.save()
+    car.save(update_fields=['status'])
     return redirect('admin_car_approval')
 
 @login_required
 @role_required('admin')
 def reject_car(request, pk):
-    car = Car.objects.get(pk=pk)
+    car = get_object_or_404(Car, pk=pk)
     car.status = 'rejected'
-    car.save()
+    car.save(update_fields=['status'])
     return redirect('admin_car_approval')
 
 @login_required
@@ -228,7 +237,7 @@ def user_dashboard(request):
         'my_bookings': user_bookings.count(),
         'active_bookings': user_bookings.filter(status__in=['pending', 'confirmed']).count(),
         'completed_bookings': user_bookings.filter(status='completed').count(),
-        'recent_bookings': user_bookings.order_by('-created_at')[:5],
+        'recent_bookings': user_bookings.select_related('car').order_by('-created_at')[:5],
     }
     
     return render(request, 'dashboard/user_dashboard.html', context)
@@ -285,7 +294,6 @@ def admin_reports(request):
     confirmed_bookings = Booking.objects.filter(status='confirmed').count()
     
     # Revenue Statistics
-    from decimal import Decimal
     COMMISSION_RATE = Decimal('0.10')  # 10%
 
     gross_revenue = Payment.objects.filter(status='completed').aggregate(total=Sum('amount'))['total'] or Decimal('0')
@@ -401,15 +409,6 @@ def admin_reports(request):
 @role_required('admin')
 def download_report(request):
     """Download admin analytics report as PDF"""
-    from reportlab.lib.pagesizes import A4
-    from reportlab.lib import colors
-    from reportlab.lib.units import cm
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from io import BytesIO
-    from decimal import Decimal
-    import datetime
-
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm,
                             topMargin=2*cm, bottomMargin=2*cm)
@@ -422,7 +421,7 @@ def download_report(request):
     # Title
     title_style = ParagraphStyle('Title', parent=styles['Title'], fontSize=20, spaceAfter=6)
     story.append(Paragraph('aSk.ren Analytics Report', title_style))
-    story.append(Paragraph(f'Generated on {datetime.datetime.now().strftime("%d %b %Y, %H:%M")}', styles['Normal']))
+    story.append(Paragraph(f'Generated on {dt.now().strftime("%d %b %Y, %H:%M")}', styles['Normal']))
     story.append(Spacer(1, 0.5*cm))
 
     # Revenue (net = completed - refunded)
@@ -513,7 +512,7 @@ def download_report(request):
 
     doc.build(story)
     buffer.seek(0)
-    filename = f'report_{datetime.datetime.now().strftime("%Y%m%d_%H%M")}.pdf'
+    filename = f'report_{dt.now().strftime("%Y%m%d_%H%M")}.pdf'
     response = HttpResponse(buffer, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
@@ -544,7 +543,6 @@ def admin_transactions(request):
 
     payments = payments.order_by('-created_at')
 
-    from decimal import Decimal
     COMMISSION_RATE = Decimal('0.10')
     total_revenue = Payment.objects.aggregate(total=Sum('amount'))['total'] or 0
     completed_revenue = Payment.objects.filter(status='completed').aggregate(total=Sum('amount'))['total'] or 0

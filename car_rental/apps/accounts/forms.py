@@ -17,7 +17,7 @@ class RegisterForm(UserCreationForm):
         # Format validation
         try:
             validate_email(email)
-        except:
+        except ValidationError:
             raise ValidationError("Invalid email format.")
 
         # Unique validation
@@ -28,7 +28,7 @@ class RegisterForm(UserCreationForm):
         domain = email.split('@')[1]
         try:
             dns.resolver.resolve(domain, 'MX')
-        except:
+        except Exception:
             raise ValidationError("Email domain does not exist.")
 
         return email

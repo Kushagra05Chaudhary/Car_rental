@@ -1,5 +1,5 @@
 ﻿from django.urls import path
-from . import views, views_razorpay
+from . import views_razorpay
 
 urlpatterns = [
     # Razorpay Integration (Primary Payment System)

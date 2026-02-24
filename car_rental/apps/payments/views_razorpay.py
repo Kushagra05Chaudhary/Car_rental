@@ -9,9 +9,10 @@ from decimal import Decimal
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, Q
+from django.db.models import Sum
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
@@ -182,8 +183,6 @@ def payment_success(request):
     Verify payment signature and confirm booking
     Called after successful Razorpay payment
     """
-    from django.urls import reverse
-    
     if request.user.role == 'admin':
         return JsonResponse({'error': 'Admins cannot make payments'}, status=403)
 
@@ -249,11 +248,9 @@ def payment_success(request):
 @require_http_methods(["POST"])
 def payment_failure(request):
     """
-    Handle payment failure
-    Called after failed Razorpay payment
+    Handle payment failure — clean up booking and redirect user to retry.
+    Called after a failed Razorpay payment.
     """
-    from django.urls import reverse
-
     if request.user.role == 'admin':
         return JsonResponse({'error': 'Admins cannot make payments'}, status=403)
 
@@ -263,49 +260,34 @@ def payment_failure(request):
         error_code = data.get('error_code')
         error_description = data.get('error_description')
 
-        # Update payment status
-        payment_service.handle_payment_failure(
-            razorpay_order_id,
-            error_code,
-            error_description
-        )
+        # Fetch car_id and user BEFORE the service deletes the records,
+        # so we can notify the user and build the retry redirect URL.
+        try:
+            payment = Payment.objects.get(razorpay_order_id=razorpay_order_id)
+            car_id = payment.booking.car.id
+            booking_user = payment.booking.user
+            car_name = payment.booking.car.name
+        except Payment.DoesNotExist:
+            # Already cleaned up by a previous call or webhook
+            return JsonResponse({'success': True, 'message': 'Already cleaned up'})
 
-        # Get payment + booking for cleanup
-        payment = Payment.objects.get(razorpay_order_id=razorpay_order_id)
-        booking = payment.booking
-        car_id = booking.car.id
-
+        # Notify user before deletion
         create_notification(
-            booking.user,
+            booking_user,
             '✗ Payment Failed',
-            f'Payment failed for {booking.car.name}. Please try again.'
+            f'Payment failed for {car_name}. Please try again.',
         )
 
-        # Delete the booking entirely — payment was never captured,
-        # so no booking should exist in the DB.  The Hold is still
-        # active (we never deleted it), so the user can go back and
-        # try paying again by clicking the Pay button once more.
-        try:
-            payment.delete()   # cascades to Booking via OneToOne? No — delete booking directly
-        except Exception:
-            pass
-        try:
-            booking.delete()
-        except Exception:
-            pass
+        # Delegate cleanup to the service (deletes Payment + Booking atomically)
+        payment_service.handle_payment_failure(razorpay_order_id, error_code, error_description)
 
-        # Redirect to car detail so user can restart checkout
         retry_url = reverse('car_detail', kwargs={'pk': car_id})
-
         return JsonResponse({
             'success': True,
             'message': 'Failure recorded',
             'redirect_url': retry_url,
         })
 
-    except Payment.DoesNotExist:
-        # Payment/booking were already cleaned up (or never created)
-        return JsonResponse({'success': True, 'message': 'Already cleaned up'})
     except Exception as e:
         logger.error(f'Payment failure handling error: {str(e)}')
         return JsonResponse({'error': f'Error processing failure: {str(e)}'}, status=500)

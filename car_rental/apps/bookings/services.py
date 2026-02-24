@@ -48,7 +48,9 @@ class OwnerBookingService:
 
         owner_cars = Car.objects.filter(owner=owner)
         OwnerBookingService.auto_transition_bookings_for_cars(owner_cars)
-        bookings = Booking.objects.filter(car__in=owner_cars)
+        bookings = Booking.objects.filter(car__in=owner_cars).select_related(
+            'user', 'car', 'car__owner'
+        )
 
         if status:
             bookings = bookings.filter(status=status)
@@ -284,7 +286,9 @@ class UserBookingService:
     def get_user_bookings(user):
         """Get all bookings for a user, with auto status transitions."""
         UserBookingService.auto_transition_bookings_for_user(user)
-        return Booking.objects.filter(user=user).order_by('-created_at')
+        return Booking.objects.filter(user=user).select_related(
+            'car', 'car__owner'
+        ).order_by('-created_at')
 
     @staticmethod
     def get_user_active_bookings(user):
