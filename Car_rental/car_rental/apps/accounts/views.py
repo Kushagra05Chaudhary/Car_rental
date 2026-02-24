@@ -1,17 +1,16 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout
-from django.contrib.auth.forms import AuthenticationForm
+import random
+
+from django.contrib import messages
+from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm
+from django.shortcuts import render, redirect
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django.core.mail import send_mail
-from django.conf import settings
-from django.contrib import messages
-from .forms import RegisterForm
-from .models import CustomUser, OTP
-from .models import OwnerRequest
+
 from apps.bookings.tasks import send_otp_email
-import random
+from .forms import OwnerPasswordChangeForm, OwnerProfileForm, RegisterForm
+from .models import CustomUser, OTP, OwnerRequest
 
 
 # ================= REGISTER WITH OTP =================
@@ -178,12 +177,7 @@ def resend_registration_otp(request):
         otp = str(random.randint(100000, 999999))
         request.session['registration_otp'] = otp
 
-        send_mail(
-            'Verify Your Account - OTP',
-            f'Your new OTP is: {otp}',
-            settings.EMAIL_HOST_USER,
-            [user_data['email']],
-        )
+        send_otp_email(user_data['email'], otp)
 
         messages.success(request, 'New OTP sent!')
         return redirect('verify_otp')
@@ -241,15 +235,12 @@ def owner_profile_edit_view(request):
         return redirect('dashboard_redirect')
     
     if request.method == 'POST':
-        from .forms import OwnerProfileForm
         form = OwnerProfileForm(request.POST, request.FILES, instance=request.user)
-        
         if form.is_valid():
             form.save()
             messages.success(request, 'Profile updated successfully!')
             return redirect('owner_profile')
     else:
-        from .forms import OwnerProfileForm
         form = OwnerProfileForm(instance=request.user)
     
     return render(request, 'accounts/owner_profile_edit.html', {'form': form})
@@ -267,17 +258,13 @@ def owner_change_password_view(request):
         return redirect('dashboard_redirect')
     
     if request.method == 'POST':
-        from .forms import OwnerPasswordChangeForm
         form = OwnerPasswordChangeForm(request.user, request.POST)
-        
         if form.is_valid():
             user = form.save()
-            from django.contrib.auth import update_session_auth_hash
             update_session_auth_hash(request, user)
             messages.success(request, 'Password changed successfully!')
             return redirect('owner_profile')
     else:
-        from .forms import OwnerPasswordChangeForm
         form = OwnerPasswordChangeForm(request.user)
     
     return render(request, 'accounts/owner_change_password.html', {'form': form})

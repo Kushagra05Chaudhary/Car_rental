@@ -4,10 +4,11 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
+from django.db.models import Q
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.generic import ListView, DetailView, View
-from django.urls import reverse_lazy
 from apps.cars.models import Car
 from .models import Booking, BookingHold
 from .services import OwnerBookingService, UserBookingService
@@ -75,18 +76,15 @@ class OwnerBookingListView(OwnerBookingMixin, ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
-        # Add statistics (always show full counts, not filtered)
-        all_bookings = OwnerBookingService.get_owner_bookings(self.request.user)
-        pending = OwnerBookingService.get_pending_bookings(self.request.user)
-        confirmed = OwnerBookingService.get_confirmed_bookings(self.request.user)
-        completed = OwnerBookingService.get_completed_bookings(self.request.user)
-        
-        context['pending_count'] = pending.count()
-        context['confirmed_count'] = confirmed.count()
-        context['completed_count'] = completed.count()
-        context['total_bookings'] = all_bookings.count()
-        
+
+        # Transitions already ran in get_queryset — reuse a fresh queryset
+        # without triggering auto-transition again.
+        all_bookings = Booking.objects.filter(car__owner=self.request.user)
+        context['pending_count']   = all_bookings.filter(status='pending').count()
+        context['confirmed_count'] = all_bookings.filter(status='confirmed').count()
+        context['completed_count'] = all_bookings.filter(status='completed').count()
+        context['total_bookings']  = all_bookings.count()
+
         return context
 
 
@@ -162,13 +160,11 @@ class UserBookingListView(UserBookingMixin, ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user_bookings = UserBookingService.get_user_bookings(self.request.user)
-        
-        context['active_count'] = UserBookingService.get_user_active_bookings(
+        # object_list is the full queryset (transitions already ran in get_queryset)
+        context['active_count']  = UserBookingService.get_user_active_bookings(
             self.request.user
         ).count()
-        context['total_bookings'] = user_bookings.count()
-        
+        context['total_bookings'] = self.object_list.count()
         return context
 
 
@@ -240,7 +236,6 @@ def car_booked_dates(request, car_id):
 
     # Collect dates from blocking bookings:
     # confirmed, ongoing, or pending-with-payment-received
-    from django.db.models import Q
     bookings = Booking.objects.filter(
         car=car,
     ).filter(
@@ -254,10 +249,9 @@ def car_booked_dates(request, car_id):
             current += timedelta(days=1)
 
     # Collect dates from active holds (not expired)
-    from django.utils import timezone as tz
     holds = BookingHold.objects.filter(
         car=car,
-        expires_at__gt=tz.now(),
+        expires_at__gt=timezone.now(),
     )
     for hold in holds:
         current = hold.start_date

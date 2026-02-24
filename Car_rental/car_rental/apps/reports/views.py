@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.views.generic import TemplateView, ListView
@@ -20,7 +20,7 @@ class OwnerReportMixin(UserPassesTestMixin, LoginRequiredMixin):
     
     def handle_no_permission(self):
         """Redirect if no permission"""
-        if self.request.user.role == 'admin':
+        if self.request.user.is_superuser or self.request.user.role == 'admin':
             messages.error(self.request, 'Admins can only access admin features.')
             return redirect('admin_dashboard')
         messages.error(self.request, 'You must be an owner to access this page.')
