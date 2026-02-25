@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}My Profile - Owner{% endblock %}
+{% block title %}My Profile{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
@@ -12,14 +12,14 @@
             <!-- LEFT PANEL — Profile Card -->
             <div
                 class="bg-gradient-to-br from-gray-900 to-gray-800 p-10 lg:p-14 flex flex-col justify-between text-white relative overflow-hidden">
-                <div class="absolute -top-20 -left-20 w-64 h-64 bg-orange-500 rounded-full opacity-10"></div>
+                <div class="absolute -top-20 -left-20 w-64 h-64 bg-blue-500 rounded-full opacity-10"></div>
                 <div class="absolute -bottom-16 -right-16 w-48 h-48 bg-purple-500 rounded-full opacity-10"></div>
 
                 <div class="relative z-10 flex flex-col items-center text-center">
                     <!-- Avatar -->
                     <div
-                        class="w-28 h-28 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl flex items-center justify-center text-white text-5xl font-bold shadow-xl mb-6">
-                        {{ request.user.get_full_name|first|default:"U" }}
+                        class="w-28 h-28 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center text-white text-5xl font-bold shadow-xl mb-6">
+                        {{ request.user.get_full_name|first|default:request.user.username|first|upper }}
                     </div>
                     <h1 class="text-3xl font-extrabold mb-1">{{ request.user.get_full_name|default:request.user.username }}</h1>
                     <p class="text-gray-400">{{ request.user.email }}</p>
@@ -43,6 +43,11 @@
                         <div class="text-gray-400 text-xs uppercase tracking-wide">Phone</div>
                         <div class="font-bold mt-1">{{ request.user.phone|default:"Not set" }}</div>
                     </div>
+                    <div
+                        class="bg-white bg-opacity-10 backdrop-blur rounded-xl p-4 border border-white border-opacity-10 col-span-2">
+                        <div class="text-gray-400 text-xs uppercase tracking-wide">Total Bookings</div>
+                        <div class="font-bold mt-1 text-2xl">{{ total_bookings }}</div>
+                    </div>
                 </div>
             </div>
 
@@ -50,68 +55,43 @@
             <div class="p-10 lg:p-14 flex flex-col justify-center">
                 <h2 class="text-3xl font-extrabold text-gray-900 mb-6">Account Details</h2>
 
-                <!-- Documents -->
+                <!-- Personal Info -->
                 <div class="space-y-4 mb-8">
-                    <h3 class="text-lg font-bold text-gray-800">Verification Documents</h3>
+                    <h3 class="text-lg font-bold text-gray-800">Personal Information</h3>
 
-                    <div
-                        class="p-4 border-2 border-dashed rounded-xl {% if request.user.driving_license %}border-green-300 bg-green-50{% else %}border-gray-300 bg-gray-50{% endif %}">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="font-bold text-gray-700">🏮 Driving License</p>
-                                <p class="text-sm text-gray-500">Your valid driving license</p>
-                            </div>
-                            {% if request.user.driving_license %}
-                            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">✓
-                                Uploaded</span>
-                            {% else %}
-                            <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold">⚠
-                                Missing</span>
-                            {% endif %}
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                            <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">First Name</div>
+                            <div class="font-semibold text-gray-800">{{ request.user.first_name|default:"—" }}</div>
                         </div>
-                        {% if request.user.driving_license %}
-                        <a href="{{ request.user.driving_license.url }}" target="_blank"
-                            class="text-green-600 hover:text-green-800 text-sm font-semibold mt-2 inline-block">
-                            View Document →
-                        </a>
-                        {% endif %}
+                        <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                            <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Last Name</div>
+                            <div class="font-semibold text-gray-800">{{ request.user.last_name|default:"—" }}</div>
+                        </div>
                     </div>
 
-                    <div
-                        class="p-4 border-2 border-dashed rounded-xl {% if request.user.insurance_document %}border-green-300 bg-green-50{% else %}border-gray-300 bg-gray-50{% endif %}">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="font-bold text-gray-700">📋 Insurance Document</p>
-                                <p class="text-sm text-gray-500">Your insurance certificate</p>
-                            </div>
-                            {% if request.user.insurance_document %}
-                            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">✓
-                                Uploaded</span>
-                            {% else %}
-                            <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold">⚠
-                                Missing</span>
-                            {% endif %}
-                        </div>
-                        {% if request.user.insurance_document %}
-                        <a href="{{ request.user.insurance_document.url }}" target="_blank"
-                            class="text-green-600 hover:text-green-800 text-sm font-semibold mt-2 inline-block">
-                            View Document →
-                        </a>
-                        {% endif %}
+                    <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Email</div>
+                        <div class="font-semibold text-gray-800">{{ request.user.email }}</div>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                        <div class="text-gray-400 text-xs uppercase tracking-wide mb-1">Phone</div>
+                        <div class="font-semibold text-gray-800">{{ request.user.phone|default:"Not set" }}</div>
                     </div>
                 </div>
 
                 <!-- Actions -->
                 <div class="space-y-3">
-                    <a href="{% url 'owner_profile_edit' %}"
+                    <a href="{% url 'user_profile_edit' %}"
                         class="w-full flex items-center justify-center bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition-all shadow-lg">
                         ✏️ Edit Profile
                     </a>
-                    <a href="{% url 'owner_change_password' %}"
+                    <a href="{% url 'user_change_password' %}"
                         class="w-full flex items-center justify-center border-2 border-gray-300 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-50 transition-all">
                         🔒 Change Password
                     </a>
-                    <a href="{% url 'owner_dashboard' %}"
+                    <a href="{% url 'user_dashboard' %}"
                         class="text-center text-gray-500 hover:text-gray-700 text-sm font-medium block mt-2">
                         ← Back to Dashboard
                     </a>

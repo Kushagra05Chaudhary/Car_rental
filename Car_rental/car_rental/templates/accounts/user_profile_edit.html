@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Edit Profile - Owner{% endblock %}
+{% block title %}Edit Profile{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
@@ -9,7 +9,7 @@
         <div
             class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 grid grid-cols-1 lg:grid-cols-2">
 
-            <!-- LEFT PANEL — Info -->
+            <!-- LEFT PANEL -->
             <div
                 class="bg-gradient-to-br from-gray-900 to-gray-800 p-10 lg:p-14 flex flex-col justify-between text-white relative overflow-hidden">
                 <div class="absolute -top-20 -left-20 w-64 h-64 bg-blue-500 rounded-full opacity-10"></div>
@@ -21,33 +21,20 @@
                         Keep your info up to date.
                     </h1>
                     <p class="text-gray-400 text-lg leading-relaxed">
-                        Update your personal details and upload verification documents.
+                        Update your personal details so others know who they're dealing with.
                     </p>
                 </div>
 
                 <div class="relative z-10 mt-10 space-y-4">
                     <div class="flex items-center gap-4">
-                        <div
-                            class="w-10 h-10 rounded-full bg-green-500 bg-opacity-20 flex items-center justify-center text-green-400 font-bold shrink-0">
-                            1</div>
+                        <div class="w-10 h-10 rounded-full bg-green-500 bg-opacity-20 flex items-center justify-center text-green-400 font-bold shrink-0">1</div>
                         <div>
                             <div class="font-semibold">Personal Details</div>
                             <div class="text-gray-500 text-sm">Name and phone number</div>
                         </div>
                     </div>
                     <div class="flex items-center gap-4">
-                        <div
-                            class="w-10 h-10 rounded-full bg-green-500 bg-opacity-20 flex items-center justify-center text-green-400 font-bold shrink-0">
-                            2</div>
-                        <div>
-                            <div class="font-semibold">Documents</div>
-                            <div class="text-gray-500 text-sm">Driving license & insurance</div>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <div
-                            class="w-10 h-10 rounded-full bg-green-500 bg-opacity-20 flex items-center justify-center text-green-400 font-bold shrink-0">
-                            3</div>
+                        <div class="w-10 h-10 rounded-full bg-green-500 bg-opacity-20 flex items-center justify-center text-green-400 font-bold shrink-0">2</div>
                         <div>
                             <div class="font-semibold">Save</div>
                             <div class="text-gray-500 text-sm">Click save to update your profile</div>
@@ -59,9 +46,9 @@
             <!-- RIGHT PANEL — Edit Form -->
             <div class="p-10 lg:p-14 flex flex-col justify-center">
                 <h2 class="text-3xl font-extrabold text-gray-900 mb-2">Edit Profile</h2>
-                <p class="text-gray-500 mb-6">Update your personal information and documents.</p>
+                <p class="text-gray-500 mb-6">Update your personal information.</p>
 
-                <form method="POST" enctype="multipart/form-data" novalidate class="space-y-4">
+                <form method="POST" novalidate class="space-y-4">
                     {% csrf_token %}
 
                     {% if form.non_field_errors %}
@@ -73,64 +60,26 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1.5">First Name</label>
-                            {% if form.first_name.value %}
-                            <input type="text" name="first_name" value="{{ form.first_name.value }}"
+                            <input type="text" name="first_name" value="{{ form.first_name.value|default:'' }}"
                                 class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition"
                                 placeholder="First name">
-                            {% else %}
-                            {{ form.first_name }}
-                            {% endif %}
-                            {% if form.first_name.errors %}<p class="text-red-600 text-sm mt-1">{{form.first_name.errors.0 }}</p>{% endif %}
+                            {% if form.first_name.errors %}<p class="text-red-600 text-sm mt-1">{{ form.first_name.errors.0 }}</p>{% endif %}
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1.5">Last Name</label>
-                            {% if form.last_name.value %}
-                            <input type="text" name="last_name" value="{{ form.last_name.value }}"
+                            <input type="text" name="last_name" value="{{ form.last_name.value|default:'' }}"
                                 class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition"
                                 placeholder="Last name">
-                            {% else %}
-                            {{ form.last_name }}
-                            {% endif %}
-                            {% if form.last_name.errors %}<p class="text-red-600 text-sm mt-1">{{form.last_name.errors.0 }}</p>{% endif %}
+                            {% if form.last_name.errors %}<p class="text-red-600 text-sm mt-1">{{ form.last_name.errors.0 }}</p>{% endif %}
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-1.5">Phone Number</label>
-                        {% if form.phone.value %}
-                        <input type="tel" name="phone" value="{{ form.phone.value }}"
+                        <input type="tel" name="phone" value="{{ form.phone.value|default:'' }}"
                             class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition"
                             placeholder="+91 XXXXX XXXXX">
-                        {% else %}
-                        {{ form.phone }}
-                        {% endif %}
                         {% if form.phone.errors %}<p class="text-red-600 text-sm mt-1">{{ form.phone.errors.0 }}</p>{% endif %}
-                    </div>
-
-                    <h3 class="text-lg font-bold text-gray-800 pt-4">Verification Documents</h3>
-
-                    <div class="grid grid-cols-1 gap-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">🏮 Driving License</label>
-                            <input type="file" name="driving_license" accept=".pdf,.jpg,.jpeg,.png"
-                                class="w-full border-2 border-dashed border-gray-300 rounded-xl px-4 py-3 cursor-pointer focus:border-blue-500 transition">
-                            {% if request.user.driving_license %}
-                            <p class="text-green-600 text-sm mt-1">✓ Currently uploaded — <a
-                                    href="{{ request.user.driving_license.url }}" target="_blank"
-                                    class="underline">View</a></p>
-                            {% endif %}
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">📋 Insurance
-                                Document</label>
-                            <input type="file" name="insurance_document" accept=".pdf,.jpg,.jpeg,.png"
-                                class="w-full border-2 border-dashed border-gray-300 rounded-xl px-4 py-3 cursor-pointer focus:border-blue-500 transition">
-                            {% if request.user.insurance_document %}
-                            <p class="text-green-600 text-sm mt-1">✓ Currently uploaded — <a
-                                    href="{{ request.user.insurance_document.url }}" target="_blank"
-                                    class="underline">View</a></p>
-                            {% endif %}
-                        </div>
                     </div>
 
                     <div class="flex gap-3 pt-2">
@@ -138,7 +87,7 @@
                             class="flex-1 bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition-all shadow-lg">
                             ✓ Save Changes →
                         </button>
-                        <a href="{% url 'owner_profile' %}"
+                        <a href="{% url 'user_profile' %}"
                             class="flex-1 flex items-center justify-center border-2 border-gray-300 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-50 transition-all">
                             Cancel
                         </a>

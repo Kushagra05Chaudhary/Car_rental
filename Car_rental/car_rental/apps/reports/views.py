@@ -2,7 +2,11 @@ from django.shortcuts import redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.views.generic import TemplateView, ListView
-from .services import OwnerRevenueService
+from .services import (
+    get_revenue_summary, get_monthly_earnings, get_top_earning_cars,
+    get_total_earnings, get_completed_bookings_count,
+    get_pending_bookings_count, get_confirmed_bookings_count,
+)
 from .models import OwnerReport
 
 
@@ -34,14 +38,14 @@ class OwnerEarningsView(OwnerReportMixin, TemplateView):
         owner = self.request.user
         
         # Get revenue summary
-        summary = OwnerRevenueService.get_revenue_summary(owner)
+        summary = get_revenue_summary(owner)
         context['summary'] = summary
         
         # Get monthly earnings
-        context['monthly_earnings'] = OwnerRevenueService.get_monthly_earnings(owner, months=6)
+        context['monthly_earnings'] = get_monthly_earnings(owner, months=6)
         
         # Get top earning cars
-        context['top_cars'] = OwnerRevenueService.get_top_earning_cars(owner, limit=5)
+        context['top_cars'] = get_top_earning_cars(owner, limit=5)
         
         return context
 
@@ -55,19 +59,17 @@ class OwnerRevenueReportView(OwnerReportMixin, TemplateView):
         owner = self.request.user
         
         # Total earnings
-        context['total_earnings'] = OwnerRevenueService.get_total_earnings(owner)
+        context['total_earnings'] = get_total_earnings(owner)
         
         # Earnings breakdown
-        context['completed_count'] = OwnerRevenueService.get_completed_bookings_count(owner)
-        context['pending_count'] = OwnerRevenueService.get_pending_bookings_count(owner)
-        context['confirmed_count'] = OwnerRevenueService.get_confirmed_bookings_count(owner)
+        context['completed_count'] = get_completed_bookings_count(owner)
+        context['pending_count'] = get_pending_bookings_count(owner)
+        context['confirmed_count'] = get_confirmed_bookings_count(owner)
         
         # Monthly data
-        monthly = OwnerRevenueService.get_monthly_earnings(owner, months=12)
+        monthly = get_monthly_earnings(owner, months=12)
         context['monthly_earnings'] = monthly
-        
-        # Get top earning cars
-        context['top_cars'] = OwnerRevenueService.get_top_earning_cars(owner, limit=10)
+        context['top_cars'] = get_top_earning_cars(owner, limit=10)
         
         return context
 
