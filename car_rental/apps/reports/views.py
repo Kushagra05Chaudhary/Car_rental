@@ -2,8 +2,6 @@ from django.shortcuts import redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.views.generic import TemplateView, ListView
-from django.utils import timezone
-from datetime import timedelta
 from .services import OwnerRevenueService
 from .models import OwnerReport
 
