@@ -12,7 +12,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse
-from django.db.models import Count, Sum, Q
+from django.db.models import Count, Sum
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
 from apps.accounts.decorators import role_required
@@ -25,17 +25,31 @@ from .services import DashboardService
 @login_required
 @role_required('admin')
 def admin_dashboard(request):
-    """Admin dashboard view"""
+    """Admin dashboard – shows platform-wide summary counts."""
+
+    # Fetch base querysets once and reuse them for counting
+    all_users     = CustomUser.objects.all()
+    all_cars      = Car.objects.all()
+    all_bookings  = Booking.objects.all()
+    pending_reqs  = OwnerRequest.objects.filter(status='pending')
+
     context = {
-        'total_users': CustomUser.objects.filter(role='user').count(),
-        'total_owners': CustomUser.objects.filter(role='owner').count(),
-        'total_cars': Car.objects.count(),
-        'pending_cars': Car.objects.filter(status='pending').count(),
-        'pending_owner_requests': OwnerRequest.objects.filter(status='pending').count(),
-        'approved_cars': Car.objects.filter(status='approved').count(),
-        'total_bookings': Booking.objects.count(),
-        'pending_bookings': Booking.objects.filter(status='pending').count(),
-        'completed_bookings': Booking.objects.filter(status='completed').count(),
+        # Count regular users and owners separately
+        'total_users':             all_users.filter(role='user').count(),
+        'total_owners':            all_users.filter(role='owner').count(),
+
+        # Car counts by status
+        'total_cars':              all_cars.count(),
+        'pending_cars':            all_cars.filter(status='pending').count(),
+        'approved_cars':           all_cars.filter(status='approved').count(),
+
+        # Owner requests waiting for admin approval
+        'pending_owner_requests':  pending_reqs.count(),
+
+        # Booking counts by status
+        'total_bookings':          all_bookings.count(),
+        'pending_bookings':        all_bookings.filter(status='pending').count(),
+        'completed_bookings':      all_bookings.filter(status='completed').count(),
     }
 
     return render(request, 'dashboard/admin_dashboard.html', context)
@@ -115,24 +129,31 @@ def reject_owner(request, pk):
 @login_required
 @role_required('admin')
 def admin_all_cars(request):
-    """Admin view of all cars with search, status, availability filters"""
-    search_query = request.GET.get('search', '')
-    status_filter = request.GET.get('status', '')
+    """Admin view of all cars with search, status, and availability filters."""
+    search_query        = request.GET.get('search', '')
+    status_filter       = request.GET.get('status', '')
     availability_filter = request.GET.get('availability', '')
 
+    # Start with all cars, joining owner info in one DB query
     cars = Car.objects.select_related('owner').all()
 
+    # --- Search: collect matching IDs from each field, then filter by union ---
     if search_query:
-        cars = cars.filter(
-            Q(name__icontains=search_query) |
-            Q(brand__icontains=search_query) |
-            Q(location__icontains=search_query) |
-            Q(owner__username__icontains=search_query)
-        )
+        # Each filter returns IDs matching that specific field
+        name_ids     = cars.filter(name__icontains=search_query).values_list('id', flat=True)
+        brand_ids    = cars.filter(brand__icontains=search_query).values_list('id', flat=True)
+        location_ids = cars.filter(location__icontains=search_query).values_list('id', flat=True)
+        owner_ids    = cars.filter(owner__username__icontains=search_query).values_list('id', flat=True)
 
+        # Combine all matched IDs into a single set (no duplicates)
+        matched_ids = set(name_ids) | set(brand_ids) | set(location_ids) | set(owner_ids)
+        cars = cars.filter(id__in=matched_ids)
+
+    # Filter by car approval status if provided
     if status_filter:
         cars = cars.filter(status=status_filter)
 
+    # Filter by availability if provided
     if availability_filter == 'available':
         cars = cars.filter(is_available=True)
     elif availability_filter == 'unavailable':
@@ -140,16 +161,21 @@ def admin_all_cars(request):
 
     cars = cars.order_by('-created_at')
 
+    # Reuse a single base queryset for all the sidebar counts
+    all_cars      = Car.objects.all()
+    approved_cars = all_cars.filter(status='approved')
+
     context = {
-        'cars': cars,
-        'total_cars': Car.objects.count(),
-        'approved_count': Car.objects.filter(status='approved').count(),
-        'pending_count': Car.objects.filter(status='pending').count(),
-        'rejected_count': Car.objects.filter(status='rejected').count(),
-        'available_count': Car.objects.filter(is_available=True, status='approved').count(),
-        'unavailable_count': Car.objects.filter(is_available=False, status='approved').count(),
-        'search_query': search_query,
-        'status_filter': status_filter,
+        'cars':               cars,
+        'total_cars':         all_cars.count(),
+        'approved_count':     approved_cars.count(),
+        'pending_count':      all_cars.filter(status='pending').count(),
+        'rejected_count':     all_cars.filter(status='rejected').count(),
+        # Availability counts are scoped to approved cars only
+        'available_count':    approved_cars.filter(is_available=True).count(),
+        'unavailable_count':  approved_cars.filter(is_available=False).count(),
+        'search_query':       search_query,
+        'status_filter':      status_filter,
         'availability_filter': availability_filter,
     }
     return render(request, 'dashboard/admin_all_cars.html', context)
@@ -183,35 +209,43 @@ def admin_delete_car(request, pk):
 @login_required
 @role_required('admin')
 def admin_all_bookings(request):
-    """Admin view of every booking on the platform"""
-    search_query   = request.GET.get('search', '')
-    status_filter  = request.GET.get('status', '')
+    """Admin view of every booking on the platform with search and status filter."""
+    search_query  = request.GET.get('search', '')
+    status_filter = request.GET.get('status', '')
 
+    # Fetch all bookings with related user and car data in one DB hit
     bookings = Booking.objects.select_related('user', 'car', 'car__owner').all()
 
+    # --- Search: collect matching IDs from each field, then filter by union ---
     if search_query:
-        bookings = bookings.filter(
-            Q(user__username__icontains=search_query) |
-            Q(user__email__icontains=search_query) |
-            Q(car__name__icontains=search_query) |
-            Q(car__owner__username__icontains=search_query)
-        )
+        user_ids      = bookings.filter(user__username__icontains=search_query).values_list('id', flat=True)
+        email_ids     = bookings.filter(user__email__icontains=search_query).values_list('id', flat=True)
+        car_ids       = bookings.filter(car__name__icontains=search_query).values_list('id', flat=True)
+        car_owner_ids = bookings.filter(car__owner__username__icontains=search_query).values_list('id', flat=True)
 
+        # Merge all matches into one set and filter
+        matched_ids = set(user_ids) | set(email_ids) | set(car_ids) | set(car_owner_ids)
+        bookings = bookings.filter(id__in=matched_ids)
+
+    # Narrow down by booking status if a filter was selected
     if status_filter:
         bookings = bookings.filter(status=status_filter)
 
     bookings = bookings.order_by('-created_at')
 
+    # Reuse one base queryset for all sidebar counts
+    all_bookings = Booking.objects.all()
+
     context = {
-        'bookings': bookings,
-        'total_bookings':     Booking.objects.count(),
-        'pending_count':      Booking.objects.filter(status='pending').count(),
-        'confirmed_count':    Booking.objects.filter(status='confirmed').count(),
-        'completed_count':    Booking.objects.filter(status='completed').count(),
-        'cancelled_count':    Booking.objects.filter(status='cancelled').count(),
-        'rejected_count':     Booking.objects.filter(status='rejected').count(),
-        'search_query':  search_query,
-        'status_filter': status_filter,
+        'bookings':       bookings,
+        'total_bookings': all_bookings.count(),
+        'pending_count':  all_bookings.filter(status='pending').count(),
+        'confirmed_count': all_bookings.filter(status='confirmed').count(),
+        'completed_count': all_bookings.filter(status='completed').count(),
+        'cancelled_count': all_bookings.filter(status='cancelled').count(),
+        'rejected_count':  all_bookings.filter(status='rejected').count(),
+        'search_query':   search_query,
+        'status_filter':  status_filter,
     }
     return render(request, 'dashboard/admin_all_bookings.html', context)
 
@@ -219,27 +253,33 @@ def admin_all_bookings(request):
 @login_required
 @role_required('owner')
 def owner_dashboard(request):
-    """Owner dashboard view with comprehensive statistics"""
-    
-    # Get all dashboard data using service
+    """Owner dashboard – delegates data collection to DashboardService."""
+
+    # All counts and earnings for this owner are built in the service layer
     dashboard_data = DashboardService.get_owner_dashboard_data(request.user)
-    
+
     return render(request, 'dashboard/owner_dashboard.html', dashboard_data)
 
 
 @login_required
 @role_required('user')
 def user_dashboard(request):
-    """User dashboard view"""
+    """User dashboard – shows the logged-in user's booking summary."""
+
+    # All bookings belonging to the current user
     user_bookings = Booking.objects.filter(user=request.user)
-    
+
     context = {
-        'my_bookings': user_bookings.count(),
-        'active_bookings': user_bookings.filter(status__in=['pending', 'confirmed']).count(),
+        # Total number of bookings this user has made
+        'my_bookings':       user_bookings.count(),
+        # Bookings that are still in progress (pending or confirmed)
+        'active_bookings':   user_bookings.filter(status='pending').count()
+                             + user_bookings.filter(status='confirmed').count(),
         'completed_bookings': user_bookings.filter(status='completed').count(),
-        'recent_bookings': user_bookings.select_related('car').order_by('-created_at')[:5],
+        # Last 5 bookings for the recent activity table
+        'recent_bookings':   user_bookings.select_related('car').order_by('-created_at')[:5],
     }
-    
+
     return render(request, 'dashboard/user_dashboard.html', context)
 
 
@@ -248,90 +288,97 @@ def user_dashboard(request):
 @login_required
 @role_required('admin')
 def admin_users_management(request):
-    """Manage all users in the system"""
+    """Manage all users – supports search by username, email, or first name."""
     search_query = request.GET.get('search', '')
-    role_filter = request.GET.get('role', '')
-    
+    role_filter  = request.GET.get('role', '')
+
+    # Start with all users
     users = CustomUser.objects.all()
-    
+
+    # --- Search: gather matching IDs field by field, then combine ---
     if search_query:
-        users = users.filter(
-            Q(username__icontains=search_query) |
-            Q(email__icontains=search_query) |
-            Q(first_name__icontains=search_query)
-        )
-    
+        username_ids   = users.filter(username__icontains=search_query).values_list('id', flat=True)
+        email_ids      = users.filter(email__icontains=search_query).values_list('id', flat=True)
+        first_name_ids = users.filter(first_name__icontains=search_query).values_list('id', flat=True)
+
+        matched_ids = set(username_ids) | set(email_ids) | set(first_name_ids)
+        users = users.filter(id__in=matched_ids)
+
+    # Optionally narrow down to a specific role
     if role_filter:
         users = users.filter(role=role_filter)
-    
+
     users = users.order_by('-created_at')
-    
+
+    # Reuse a base queryset for sidebar counts so we avoid extra queries
+    all_users = CustomUser.objects.all()
+
     context = {
-        'users': users,
-        'total_users': CustomUser.objects.count(),
-        'users_count': CustomUser.objects.filter(role='user').count(),
-        'owners_count': CustomUser.objects.filter(role='owner').count(),
-        'admins_count': CustomUser.objects.filter(role='admin').count(),
+        'users':        users,
+        'total_users':  all_users.count(),
+        'users_count':  all_users.filter(role='user').count(),
+        'owners_count': all_users.filter(role='owner').count(),
+        'admins_count': all_users.filter(role='admin').count(),
         'search_query': search_query,
-        'role_filter': role_filter,
+        'role_filter':  role_filter,
     }
-    
+
     return render(request, 'dashboard/admin_users_management.html', context)
 
 
 @login_required
 @role_required('admin')
 def admin_reports(request):
-    """Admin reports and analytics"""
-    
-    # Date range for last 30 days
+    """Admin reports – platform-wide analytics and revenue summary."""
+
+    # ----- Date helpers -----
     thirty_days_ago = timezone.now() - timedelta(days=30)
-    
-    # Booking Statistics
-    total_bookings = Booking.objects.count()
-    completed_bookings = Booking.objects.filter(status='completed').count()
-    pending_bookings = Booking.objects.filter(status='pending').count()
-    confirmed_bookings = Booking.objects.filter(status='confirmed').count()
-    
-    # Revenue Statistics
-    COMMISSION_RATE = Decimal('0.10')  # 10%
+    six_months_ago  = timezone.now() - timedelta(days=180)
 
-    gross_revenue = Payment.objects.filter(status='completed').aggregate(total=Sum('amount'))['total'] or Decimal('0')
-    total_refunded = Payment.objects.filter(status='refunded').aggregate(total=Sum('amount'))['total'] or Decimal('0')
-    refund_count = Payment.objects.filter(status='refunded').count()
-    total_revenue = gross_revenue - total_refunded  # net revenue
+    COMMISSION_RATE = Decimal('0.10')  # Platform takes 10% of net revenue
 
-    gross_last_30 = Payment.objects.filter(
-        status='completed', created_at__gte=thirty_days_ago
-    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
-    refunded_last_30 = Payment.objects.filter(
-        status='refunded', created_at__gte=thirty_days_ago
-    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
-    revenue_last_30_days = gross_last_30 - refunded_last_30  # net last 30 days
+    # ----- Booking counts -----
+    # Reuse one base queryset so we hit the DB once per .count() call
+    all_bookings       = Booking.objects.all()
+    total_bookings     = all_bookings.count()
+    completed_bookings = all_bookings.filter(status='completed').count()
+    pending_bookings   = all_bookings.filter(status='pending').count()
+    confirmed_bookings = all_bookings.filter(status='confirmed').count()
 
-    commission_earned = total_revenue * COMMISSION_RATE
+    # ----- Revenue calculations -----
+    # Completed payments = gross money collected
+    completed_payments = Payment.objects.filter(status='completed')
+    refunded_payments  = Payment.objects.filter(status='refunded')
+
+    gross_revenue  = completed_payments.aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    total_refunded = refunded_payments.aggregate(total=Sum('amount'))['total']  or Decimal('0')
+    refund_count   = refunded_payments.count()
+    # Net revenue = what was collected minus what was returned
+    total_revenue  = gross_revenue - total_refunded
+
+    # Same calculation scoped to the last 30 days
+    gross_last_30     = completed_payments.filter(created_at__gte=thirty_days_ago).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    refunded_last_30  = refunded_payments.filter(created_at__gte=thirty_days_ago).aggregate(total=Sum('amount'))['total']  or Decimal('0')
+    revenue_last_30_days = gross_last_30 - refunded_last_30
+
+    # Platform commission = 10% of net revenue
+    commission_earned  = total_revenue * COMMISSION_RATE
     commission_30_days = revenue_last_30_days * COMMISSION_RATE
-    
-    # User Statistics
-    new_users_30_days = CustomUser.objects.filter(
-        created_at__gte=thirty_days_ago,
-        role='user'
-    ).count()
-    
-    # Car Statistics
-    approved_cars = Car.objects.filter(status='approved').count()
-    pending_cars = Car.objects.filter(status='pending').count()
-    rejected_cars = Car.objects.filter(status='rejected').count()
-    
-    # Owner Statistics
-    total_owners = CustomUser.objects.filter(role='owner').count()
-    new_owners_30_days = CustomUser.objects.filter(
-        created_at__gte=thirty_days_ago,
-        role='owner'
-    ).count()
-    
-    # Monthly net revenue for last 6 months (completed - refunded per month)
-    six_months_ago = timezone.now() - timedelta(days=180)
+
+    # ----- User and owner stats -----
+    all_users         = CustomUser.objects.all()
+    new_users_30_days = all_users.filter(role='user', created_at__gte=thirty_days_ago).count()
+    total_owners      = all_users.filter(role='owner').count()
+    new_owners_30_days = all_users.filter(role='owner', created_at__gte=thirty_days_ago).count()
+
+    # ----- Car stats -----
+    all_cars      = Car.objects.all()
+    approved_cars = all_cars.filter(status='approved').count()
+    pending_cars  = all_cars.filter(status='pending').count()
+    rejected_cars = all_cars.filter(status='rejected').count()
+
+    # ----- Monthly net revenue chart (last 6 months) -----
+    # Group completed payments by calendar month and sum them
     monthly_completed_qs = (
         Payment.objects.filter(status='completed', created_at__gte=six_months_ago)
         .annotate(month=TruncMonth('created_at'))
@@ -339,13 +386,17 @@ def admin_reports(request):
         .annotate(total=Sum('amount'))
         .order_by('month')
     )
+    # Group refunded payments by month so we can subtract them
     monthly_refunded_qs = (
         Payment.objects.filter(status='refunded', created_at__gte=six_months_ago)
         .annotate(month=TruncMonth('created_at'))
         .values('month')
         .annotate(total=Sum('amount'))
     )
+
+    # Build a dict {month: refunded_amount} for quick lookup
     refunded_by_month = {entry['month']: float(entry['total']) for entry in monthly_refunded_qs}
+
     revenue_months = [entry['month'].strftime('%b %Y') for entry in monthly_completed_qs]
     revenue_values = [
         round(float(entry['total']) - refunded_by_month.get(entry['month'], 0), 2)
@@ -353,62 +404,65 @@ def admin_reports(request):
     ]
     commission_values = [round(v * 0.10, 2) for v in revenue_values]
 
-    # Booking status breakdown
-    booking_stats = Booking.objects.values('status').annotate(count=Count('id'))
-    
-    # Top earning owners - simplified query
-    top_owners = Payment.objects.filter(
-        status='completed'
-    ).values('booking__car__owner').annotate(
-        total_earnings=Sum('amount')
-    ).order_by('-total_earnings')[:5]
-    
-    # Get owner usernames for display
+    # ----- Booking status breakdown for chart -----
+    # Returns a list like [{'status': 'completed', 'count': 42}, ...]
+    booking_stats = all_bookings.values('status').annotate(count=Count('id'))
+
+    # ----- Top 5 earning owners -----
+    # Sum completed payment amounts grouped by the car's owner
+    top_owners_qs = (
+        Payment.objects.filter(status='completed')
+        .values('booking__car__owner')
+        .annotate(total_earnings=Sum('amount'))
+        .order_by('-total_earnings')[:5]
+    )
+
+    # Attach the actual owner object to each result for template display
     top_owners_list = []
-    for owner_data in top_owners:
-        owner_id = owner_data['booking__car__owner']
+    for row in top_owners_qs:
+        owner_id = row['booking__car__owner']
         if owner_id:
             try:
                 owner = CustomUser.objects.get(id=owner_id, role='owner')
                 top_owners_list.append({
-                    'owner': owner,
-                    'total_earnings': owner_data['total_earnings']
+                    'owner':          owner,
+                    'total_earnings': row['total_earnings'],
                 })
             except CustomUser.DoesNotExist:
                 pass
-    
+
     context = {
-        'total_bookings': total_bookings,
-        'completed_bookings': completed_bookings,
-        'pending_bookings': pending_bookings,
-        'confirmed_bookings': confirmed_bookings,
-        'total_revenue': total_revenue,
+        'total_bookings':      total_bookings,
+        'completed_bookings':  completed_bookings,
+        'pending_bookings':    pending_bookings,
+        'confirmed_bookings':  confirmed_bookings,
+        'total_revenue':       total_revenue,
         'revenue_last_30_days': revenue_last_30_days,
-        'gross_revenue': gross_revenue,
-        'total_refunded': total_refunded,
-        'refund_count': refund_count,
-        'commission_earned': commission_earned,
-        'commission_30_days': commission_30_days,
-        'new_users_30_days': new_users_30_days,
-        'approved_cars': approved_cars,
-        'pending_cars': pending_cars,
-        'rejected_cars': rejected_cars,
-        'total_owners': total_owners,
-        'new_owners_30_days': new_owners_30_days,
-        'booking_stats': booking_stats,
-        'top_owners': top_owners_list,
-        'revenue_months': revenue_months,
-        'revenue_values': revenue_values,
-        'commission_values': commission_values,
+        'gross_revenue':       gross_revenue,
+        'total_refunded':      total_refunded,
+        'refund_count':        refund_count,
+        'commission_earned':   commission_earned,
+        'commission_30_days':  commission_30_days,
+        'new_users_30_days':   new_users_30_days,
+        'approved_cars':       approved_cars,
+        'pending_cars':        pending_cars,
+        'rejected_cars':       rejected_cars,
+        'total_owners':        total_owners,
+        'new_owners_30_days':  new_owners_30_days,
+        'booking_stats':       booking_stats,
+        'top_owners':          top_owners_list,
+        'revenue_months':      revenue_months,
+        'revenue_values':      revenue_values,
+        'commission_values':   commission_values,
     }
-    
+
     return render(request, 'dashboard/admin_reports.html', context)
 
 
 @login_required
 @role_required('admin')
 def download_report(request):
-    """Download admin analytics report as PDF"""
+    """Generate and download the admin analytics report as a PDF file."""
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm,
                             topMargin=2*cm, bottomMargin=2*cm)
@@ -418,21 +472,27 @@ def download_report(request):
     COMMISSION_RATE = Decimal('0.10')
     thirty_days_ago = timezone.now() - timedelta(days=30)
 
-    # Title
+    # ----- PDF title and generation date -----
     title_style = ParagraphStyle('Title', parent=styles['Title'], fontSize=20, spaceAfter=6)
     story.append(Paragraph('aSk.ren Analytics Report', title_style))
     story.append(Paragraph(f'Generated on {dt.now().strftime("%d %b %Y, %H:%M")}', styles['Normal']))
     story.append(Spacer(1, 0.5*cm))
 
-    # Revenue (net = completed - refunded)
-    gross_revenue = Payment.objects.filter(status='completed').aggregate(total=Sum('amount'))['total'] or Decimal('0')
-    total_refunded = Payment.objects.filter(status='refunded').aggregate(total=Sum('amount'))['total'] or Decimal('0')
-    refund_count = Payment.objects.filter(status='refunded').count()
-    total_revenue = gross_revenue - total_refunded
-    gross_30 = Payment.objects.filter(status='completed', created_at__gte=thirty_days_ago).aggregate(total=Sum('amount'))['total'] or Decimal('0')
-    refunded_30 = Payment.objects.filter(status='refunded', created_at__gte=thirty_days_ago).aggregate(total=Sum('amount'))['total'] or Decimal('0')
-    revenue_30 = gross_30 - refunded_30
-    commission = total_revenue * COMMISSION_RATE
+    # ----- Revenue section -----
+    # Fetch completed and refunded payment querysets once, reuse for both all-time and 30-day calcs
+    completed_payments = Payment.objects.filter(status='completed')
+    refunded_payments  = Payment.objects.filter(status='refunded')
+
+    gross_revenue  = completed_payments.aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    total_refunded = refunded_payments.aggregate(total=Sum('amount'))['total']  or Decimal('0')
+    refund_count   = refunded_payments.count()
+    total_revenue  = gross_revenue - total_refunded
+
+    # Narrow the same querysets to the last 30 days
+    gross_30     = completed_payments.filter(created_at__gte=thirty_days_ago).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    refunded_30  = refunded_payments.filter(created_at__gte=thirty_days_ago).aggregate(total=Sum('amount'))['total']  or Decimal('0')
+    revenue_30   = gross_30 - refunded_30
+    commission   = total_revenue * COMMISSION_RATE
     commission_30 = revenue_30 * COMMISSION_RATE
 
     story.append(Paragraph('Revenue Summary', styles['Heading2']))
@@ -460,15 +520,16 @@ def download_report(request):
     story.append(t)
     story.append(Spacer(1, 0.5*cm))
 
-    # Bookings
+    # ----- Booking section (reuse one base queryset) -----
     story.append(Paragraph('Booking Statistics', styles['Heading2']))
+    all_bookings = Booking.objects.all()
     bk_data = [
         ['Status', 'Count'],
-        ['Total Bookings', str(Booking.objects.count())],
-        ['Completed', str(Booking.objects.filter(status='completed').count())],
-        ['Confirmed', str(Booking.objects.filter(status='confirmed').count())],
-        ['Pending', str(Booking.objects.filter(status='pending').count())],
-        ['Cancelled', str(Booking.objects.filter(status='cancelled').count())],
+        ['Total Bookings', str(all_bookings.count())],
+        ['Completed',      str(all_bookings.filter(status='completed').count())],
+        ['Confirmed',      str(all_bookings.filter(status='confirmed').count())],
+        ['Pending',        str(all_bookings.filter(status='pending').count())],
+        ['Cancelled',      str(all_bookings.filter(status='cancelled').count())],
     ]
     t2 = Table(bk_data, colWidths=[10*cm, 7*cm])
     t2.setStyle(TableStyle([
@@ -485,16 +546,18 @@ def download_report(request):
     story.append(t2)
     story.append(Spacer(1, 0.5*cm))
 
-    # Cars & Users
+    # ----- Platform overview section (reuse base querysets) -----
     story.append(Paragraph('Platform Overview', styles['Heading2']))
+    all_cars  = Car.objects.all()
+    all_users = CustomUser.objects.all()
     ov_data = [
         ['Metric', 'Count'],
-        ['Approved Cars', str(Car.objects.filter(status='approved').count())],
-        ['Pending Cars', str(Car.objects.filter(status='pending').count())],
-        ['Rejected Cars', str(Car.objects.filter(status='rejected').count())],
-        ['Total Owners', str(CustomUser.objects.filter(role='owner').count())],
-        ['Total Users', str(CustomUser.objects.filter(role='user').count())],
-        ['New Users (30 Days)', str(CustomUser.objects.filter(role='user', created_at__gte=thirty_days_ago).count())],
+        ['Approved Cars',       str(all_cars.filter(status='approved').count())],
+        ['Pending Cars',        str(all_cars.filter(status='pending').count())],
+        ['Rejected Cars',       str(all_cars.filter(status='rejected').count())],
+        ['Total Owners',        str(all_users.filter(role='owner').count())],
+        ['Total Users',         str(all_users.filter(role='user').count())],
+        ['New Users (30 Days)', str(all_users.filter(role='user', created_at__gte=thirty_days_ago).count())],
     ]
     t3 = Table(ov_data, colWidths=[10*cm, 7*cm])
     t3.setStyle(TableStyle([
@@ -520,49 +583,61 @@ def download_report(request):
 @login_required
 @role_required('admin')
 def admin_transactions(request):
-    """Admin transactions page – full payment history with filters"""
-    search_query = request.GET.get('search', '')
+    """Admin transactions page – full payment history with search and filters."""
+    search_query  = request.GET.get('search', '')
     status_filter = request.GET.get('status', '')
     method_filter = request.GET.get('method', '')
 
+    # Fetch all payments, joining user and car info in one DB query
     payments = Payment.objects.select_related('user', 'booking__car').all()
 
+    # --- Search: gather matching IDs field by field, then combine ---
     if search_query:
-        payments = payments.filter(
-            Q(transaction_id__icontains=search_query) |
-            Q(user__username__icontains=search_query) |
-            Q(user__email__icontains=search_query) |
-            Q(booking__car__name__icontains=search_query)
-        )
+        txn_ids  = payments.filter(transaction_id__icontains=search_query).values_list('id', flat=True)
+        user_ids = payments.filter(user__username__icontains=search_query).values_list('id', flat=True)
+        email_ids = payments.filter(user__email__icontains=search_query).values_list('id', flat=True)
+        car_ids  = payments.filter(booking__car__name__icontains=search_query).values_list('id', flat=True)
 
+        matched_ids = set(txn_ids) | set(user_ids) | set(email_ids) | set(car_ids)
+        payments = payments.filter(id__in=matched_ids)
+
+    # Filter by payment status if selected
     if status_filter:
         payments = payments.filter(status=status_filter)
 
+    # Filter by payment method if selected (case-insensitive)
     if method_filter:
         payments = payments.filter(payment_method__iexact=method_filter)
 
     payments = payments.order_by('-created_at')
 
     COMMISSION_RATE = Decimal('0.10')
-    total_revenue = Payment.objects.aggregate(total=Sum('amount'))['total'] or 0
-    completed_revenue = Payment.objects.filter(status='completed').aggregate(total=Sum('amount'))['total'] or 0
-    refunded_revenue = Payment.objects.filter(status='refunded').aggregate(total=Sum('amount'))['total'] or 0
-    commission_earned = (completed_revenue or Decimal('0')) * COMMISSION_RATE
+
+    # Reuse base queryset for revenue totals to avoid extra round-trips
+    all_payments       = Payment.objects.all()
+    completed_payments = all_payments.filter(status='completed')
+    refunded_payments  = all_payments.filter(status='refunded')
+
+    total_revenue     = all_payments.aggregate(total=Sum('amount'))['total'] or 0
+    completed_revenue = completed_payments.aggregate(total=Sum('amount'))['total'] or 0
+    refunded_revenue  = refunded_payments.aggregate(total=Sum('amount'))['total'] or 0
+    # Commission is calculated only on successfully completed payments
+    commission_earned = (Decimal(str(completed_revenue))) * COMMISSION_RATE
 
     context = {
-        'payments': payments,
-        'total_transactions': Payment.objects.count(),
-        'completed_count': Payment.objects.filter(status='completed').count(),
-        'pending_count': Payment.objects.filter(status='pending').count(),
-        'refunded_count': Payment.objects.filter(status='refunded').count(),
-        'failed_count': Payment.objects.filter(status='failed').count(),
-        'total_revenue': total_revenue,
-        'completed_revenue': completed_revenue,
-        'refunded_revenue': refunded_revenue,
-        'commission_earned': commission_earned,
-        'search_query': search_query,
-        'status_filter': status_filter,
-        'method_filter': method_filter,
+        'payments':           payments,
+        'total_transactions': all_payments.count(),
+        'completed_count':    completed_payments.count(),
+        'pending_count':      all_payments.filter(status='pending').count(),
+        'refunded_count':     refunded_payments.count(),
+        'failed_count':       all_payments.filter(status='failed').count(),
+        'total_revenue':      total_revenue,
+        'completed_revenue':  completed_revenue,
+        'refunded_revenue':   refunded_revenue,
+        'commission_earned':  commission_earned,
+        'search_query':       search_query,
+        'status_filter':      status_filter,
+        'method_filter':      method_filter,
     }
 
     return render(request, 'dashboard/admin_transactions.html', context)
