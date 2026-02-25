@@ -9,7 +9,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from apps.bookings.tasks import send_otp_email
-from .forms import OwnerPasswordChangeForm, OwnerProfileForm, RegisterForm
+from .forms import OwnerPasswordChangeForm, OwnerProfileForm, UserProfileForm, RegisterForm
 from .models import CustomUser, OTP, OwnerRequest
 
 
@@ -268,3 +268,48 @@ def owner_change_password_view(request):
         form = OwnerPasswordChangeForm(request.user)
     
     return render(request, 'accounts/owner_change_password.html', {'form': form})
+
+
+# ================= USER PROFILE =================
+
+@login_required
+def user_profile_view(request):
+    """View regular user profile"""
+    if request.user.role != 'user':
+        return redirect('dashboard_redirect')
+    from apps.bookings.models import Booking
+    total_bookings = Booking.objects.filter(user=request.user).count()
+    return render(request, 'accounts/user_profile.html', {'total_bookings': total_bookings})
+
+
+@login_required
+def user_profile_edit_view(request):
+    """Edit regular user profile"""
+    if request.user.role != 'user':
+        return redirect('dashboard_redirect')
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('user_profile')
+    else:
+        form = UserProfileForm(instance=request.user)
+    return render(request, 'accounts/user_profile_edit.html', {'form': form})
+
+
+@login_required
+def user_change_password_view(request):
+    """Change password for regular user"""
+    if request.user.role != 'user':
+        return redirect('dashboard_redirect')
+    if request.method == 'POST':
+        form = OwnerPasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Password changed successfully!')
+            return redirect('user_profile')
+    else:
+        form = OwnerPasswordChangeForm(request.user)
+    return render(request, 'accounts/user_change_password.html', {'form': form})

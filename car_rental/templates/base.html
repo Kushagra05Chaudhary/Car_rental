@@ -345,11 +345,6 @@
 
                             <!-- Admin / Superuser Navigation -->
                             {% if user.role == 'admin' or user.is_superuser %}
-                            <a href="{% url 'admin_dashboard' %}"
-                                class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors text-gray-700 hover:text-gray-900 font-medium text-sm">
-                                <span class="text-lg">📊</span>
-                                <span>Admin Overview</span>
-                            </a>
                             <a href="{% url 'admin_car_approval' %}"
                                 class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors text-gray-700 hover:text-gray-900 font-medium text-sm">
                                 <span class="text-lg">✅</span>
@@ -448,7 +443,7 @@
 
                             <!-- Regular User Menu -->
                             {% if user.role == 'user' and not user.is_superuser %}
-                            <a href="{% url 'user_dashboard' %}"
+                            <a href="{% url 'user_profile' %}"
                                 class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors text-gray-700 hover:text-gray-900 font-medium text-sm">
                                 <span class="text-lg">👤</span>
                                 <span>Profile</span>
@@ -459,7 +454,7 @@
                                 <span>My Transactions</span>
                             </a>
                             {% elif user.role == 'owner' and not user.is_superuser %}
-                            <a href="{% url 'owner_dashboard' %}"
+                            <a href="{% url 'owner_profile' %}"
                                 class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors text-gray-700 hover:text-gray-900 font-medium text-sm">
                                 <span class="text-lg">👤</span>
                                 <span>Profile</span>
@@ -467,8 +462,8 @@
                             {% elif user.role == 'admin' or user.is_superuser %}
                             <a href="{% url 'admin_dashboard' %}"
                                 class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors text-gray-700 hover:text-gray-900 font-medium text-sm">
-                                <span class="text-lg">👤</span>
-                                <span>Profile</span>
+                                <span class="text-lg">📊</span>
+                                <span>Admin Overview</span>
                             </a>
                             {% endif %}
 

@@ -4,14 +4,16 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
-from django.db.models import Q
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.generic import ListView, DetailView, View
 from apps.cars.models import Car
 from .models import Booking, BookingHold
-from .services import OwnerBookingService, UserBookingService
+from .services import (
+    get_owner_bookings, get_booking_details, accept_booking, reject_booking,
+    get_user_bookings, get_user_active_bookings, has_conflicts, create_hold,
+)
 
 
 # ============ OWNER VIEWS ============
@@ -65,7 +67,7 @@ class OwnerBookingListView(OwnerBookingMixin, ListView):
     
     def get_queryset(self):
         """Get bookings for owner's cars"""
-        queryset = OwnerBookingService.get_owner_bookings(self.request.user).order_by('-created_at')
+        queryset = get_owner_bookings(self.request.user).order_by('-created_at')
         
         # Filter by status if provided
         status = self.request.GET.get('status', '')
@@ -97,7 +99,7 @@ class OwnerBookingDetailView(OwnerBookingMixin, DetailView):
     def get_object(self, queryset=None):
         """Ensure owner can only view bookings of their cars"""
         booking_id = self.kwargs.get('pk')
-        booking = OwnerBookingService.get_booking_details(booking_id, self.request.user)
+        booking = get_booking_details(booking_id, self.request.user)
         
         if not booking:
             raise Http404("Booking not found")
@@ -117,7 +119,7 @@ class OwnerAcceptBookingView(OwnerBookingMixin, View):
             return redirect('owner_booking_list')
         
         try:
-            OwnerBookingService.accept_booking(booking)
+            accept_booking(booking)
             messages.success(request, 'Booking accepted successfully!')
         except ValueError as e:
             messages.error(request, str(e))
@@ -137,7 +139,7 @@ class OwnerRejectBookingView(OwnerBookingMixin, View):
             return redirect('owner_booking_list')
         
         try:
-            OwnerBookingService.reject_booking(booking)
+            reject_booking(booking)
             messages.success(request, 'Booking rejected successfully!')
         except ValueError as e:
             messages.error(request, str(e))
@@ -156,12 +158,12 @@ class UserBookingListView(UserBookingMixin, ListView):
     
     def get_queryset(self):
         """Get bookings for current user"""
-        return UserBookingService.get_user_bookings(self.request.user)
+        return get_user_bookings(self.request.user)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # object_list is the full queryset (transitions already ran in get_queryset)
-        context['active_count']  = UserBookingService.get_user_active_bookings(
+        context['active_count']  = get_user_active_bookings(
             self.request.user
         ).count()
         context['total_bookings'] = self.object_list.count()
@@ -213,12 +215,12 @@ def create_booking(request, car_id):
             messages.error(request, 'End date must be same as or after start date.')
             return render(request, 'bookings/create_booking.html', {'car': car})
 
-        if UserBookingService.has_conflicts(car, start, end, exclude_user=request.user):
+        if has_conflicts(car, start, end, exclude_user=request.user):
             messages.error(request, 'This car is already reserved for the selected dates.')
             return render(request, 'bookings/create_booking.html', {'car': car})
 
         hold_minutes = getattr(settings, 'BOOKING_HOLD_MINUTES', 10)
-        hold = UserBookingService.create_hold(request.user, car, start, end, hold_minutes=hold_minutes)
+        hold = create_hold(request.user, car, start, end, hold_minutes=hold_minutes)
 
         # Do NOT create a Booking here — the booking is only created after
         # the user actually completes payment (in initiate_payment / payment_success).
@@ -234,15 +236,21 @@ def car_booked_dates(request, car_id):
 
     booked_dates = set()
 
-    # Collect dates from blocking bookings:
-    # confirmed, ongoing, or pending-with-payment-received
-    bookings = Booking.objects.filter(
+    # Get confirmed or ongoing bookings — these block the car
+    active_bookings = Booking.objects.filter(
         car=car,
-    ).filter(
-        Q(status__in=['confirmed', 'ongoing']) |
-        Q(status='pending', payment_status='paid')
+        status__in=['confirmed', 'ongoing'],
     )
-    for booking in bookings:
+
+    # Also get pending bookings where the user already paid
+    paid_pending_bookings = Booking.objects.filter(
+        car=car,
+        status='pending',
+        payment_status='paid',
+    )
+
+    # Collect all blocked dates from both booking groups
+    for booking in list(active_bookings) + list(paid_pending_bookings):
         current = booking.start_date
         while current <= booking.end_date:
             booked_dates.add(current.isoformat())

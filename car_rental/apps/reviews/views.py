@@ -4,7 +4,6 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from apps.bookings.models import Booking
 from .forms import ReviewForm
-from .models import Review
 
 
 @login_required

@@ -12,6 +12,11 @@ urlpatterns = [
     path('resend-otp/', views.resend_registration_otp, name='resend_registration_otp'),
     path('become-owner/', views.become_owner, name='become_owner'),
     
+    # User profile
+    path('profile/', views.user_profile_view, name='user_profile'),
+    path('profile/edit/', views.user_profile_edit_view, name='user_profile_edit'),
+    path('profile/change-password/', views.user_change_password_view, name='user_change_password'),
+
     # Owner profile views
     path('owner/profile/', views.owner_profile_view, name='owner_profile'),
     path('owner/profile/edit/', views.owner_profile_edit_view, name='owner_profile_edit'),

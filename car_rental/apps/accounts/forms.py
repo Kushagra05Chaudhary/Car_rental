@@ -1,7 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
+from django.contrib.auth.forms import UserCreationForm, SetPasswordForm
 from .models import CustomUser
 import dns.resolver
 
@@ -96,14 +96,33 @@ class OwnerProfileForm(forms.ModelForm):
         return file
 
 
-class OwnerPasswordChangeForm(PasswordChangeForm):
-    """Custom password change form for owners"""
-    
+class UserProfileForm(forms.ModelForm):
+    """Form for regular user to update profile"""
+
+    class Meta:
+        model = CustomUser
+        fields = ['first_name', 'last_name', 'phone']
+        widgets = {
+            'first_name': forms.TextInput(attrs={
+                'class': 'w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition',
+                'placeholder': 'First Name',
+            }),
+            'last_name': forms.TextInput(attrs={
+                'class': 'w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition',
+                'placeholder': 'Last Name',
+            }),
+            'phone': forms.TextInput(attrs={
+                'class': 'w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition',
+                'placeholder': '+91 XXXXX XXXXX',
+            }),
+        }
+
+
+class OwnerPasswordChangeForm(SetPasswordForm):
+    """Password change form — no current password required (supports OTP login)"""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['old_password'].widget.attrs.update({
-            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500',
-        })
         self.fields['new_password1'].widget.attrs.update({
             'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500',
         })

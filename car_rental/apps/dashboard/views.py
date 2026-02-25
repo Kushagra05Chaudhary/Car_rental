@@ -20,7 +20,7 @@ from apps.accounts.models import CustomUser, OwnerRequest
 from apps.cars.models import Car
 from apps.bookings.models import Booking
 from apps.payments.models import Payment
-from .services import DashboardService
+from .services import get_owner_dashboard_data
 
 @login_required
 @role_required('admin')
@@ -253,10 +253,10 @@ def admin_all_bookings(request):
 @login_required
 @role_required('owner')
 def owner_dashboard(request):
-    """Owner dashboard – delegates data collection to DashboardService."""
+    """Owner dashboard – collects data via get_owner_dashboard_data."""
 
     # All counts and earnings for this owner are built in the service layer
-    dashboard_data = DashboardService.get_owner_dashboard_data(request.user)
+    dashboard_data = get_owner_dashboard_data(request.user)
 
     return render(request, 'dashboard/owner_dashboard.html', dashboard_data)
 

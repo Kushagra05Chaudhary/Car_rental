@@ -19,7 +19,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction as db_transaction
 
 from apps.bookings.models import Booking, BookingHold
-from apps.bookings.services import UserBookingService
+from apps.bookings.services import has_conflicts
 from apps.accounts.decorators import role_required
 from apps.notifications.services import create_notification
 from .models import Payment, Refund
@@ -135,7 +135,7 @@ def initiate_payment(request):
         return JsonResponse({'error': 'Reservation expired. Please select dates again.'}, status=400)
 
     # Final conflict check right before creating the booking
-    if UserBookingService.has_conflicts(hold.car, hold.start_date, hold.end_date, exclude_user=request.user):
+    if has_conflicts(hold.car, hold.start_date, hold.end_date, exclude_user=request.user):
         hold.delete()
         return JsonResponse({'error': 'These dates are no longer available. Please choose different dates.'}, status=409)
 

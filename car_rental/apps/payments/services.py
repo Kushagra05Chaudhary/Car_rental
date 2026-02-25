@@ -29,19 +29,7 @@ class RazorpayPaymentService:
 
     @transaction.atomic
     def create_order(self, booking_id, amount):
-        """
-        Create Razorpay order for a booking
-        
-        Args:
-            booking_id (int): Booking object ID
-            amount (Decimal): Amount in INR
-            
-        Returns:
-            dict: Order details with razorpay_order_id
-            
-        Raises:
-            Exception: If order creation fails
-        """
+        """Create a Razorpay order for booking_id and return order details."""
         try:
             booking = Booking.objects.get(id=booking_id)
             
@@ -95,17 +83,7 @@ class RazorpayPaymentService:
             raise
 
     def verify_payment_signature(self, razorpay_order_id, razorpay_payment_id, razorpay_signature):
-        """
-        Verify Razorpay payment signature
-        
-        Args:
-            razorpay_order_id (str): Order ID from Razorpay
-            razorpay_payment_id (str): Payment ID from Razorpay
-            razorpay_signature (str): Signature from frontend
-            
-        Returns:
-            bool: True if signature is valid
-        """
+        """Return True if the Razorpay HMAC-SHA256 signature is valid."""
         try:
             body = f'{razorpay_order_id}|{razorpay_payment_id}'
             
@@ -130,20 +108,7 @@ class RazorpayPaymentService:
 
     @transaction.atomic
     def handle_payment_success(self, razorpay_order_id, razorpay_payment_id, razorpay_signature):
-        """
-        Process successful payment
-        
-        Args:
-            razorpay_order_id (str): Order ID
-            razorpay_payment_id (str): Payment ID
-            razorpay_signature (str): Signature
-            
-        Returns:
-            dict: Payment confirmation details
-            
-        Raises:
-            ValueError: If payment verification fails
-        """
+        """Verify signature, mark payment completed, and update booking to pending-owner-approval."""
         # Verify signature first
         if not self.verify_payment_signature(razorpay_order_id, razorpay_payment_id, razorpay_signature):
             raise ValueError("Payment signature verification failed")
@@ -188,14 +153,7 @@ class RazorpayPaymentService:
 
     @transaction.atomic
     def handle_payment_failure(self, razorpay_order_id, error_code=None, error_description=None):
-        """
-        Handle failed payment
-        
-        Args:
-            razorpay_order_id (str): Order ID
-            error_code (str): Error code from Razorpay
-            error_description (str): Error description
-        """
+        """Mark payment as failed and delete the associated booking."""
         try:
             payment = Payment.objects.get(razorpay_order_id=razorpay_order_id)
 
@@ -219,20 +177,7 @@ class RazorpayPaymentService:
 
     @transaction.atomic
     def create_refund(self, payment_id, reason=None, initiated_by=None):
-        """
-        Create refund for a payment
-        
-        Args:
-            payment_id (int): Payment object ID
-            reason (str): Reason for refund
-            initiated_by (User): User initiating refund (usually admin)
-            
-        Returns:
-            dict: Refund details
-            
-        Raises:
-            ValueError: If refund cannot be created
-        """
+        """Issue a Razorpay refund for payment_id and return refund details."""
         try:
             payment = Payment.objects.get(id=payment_id)
             
@@ -294,16 +239,7 @@ class RazorpayPaymentService:
             raise
 
     def verify_webhook_signature(self, webhook_body, webhook_signature):
-        """
-        Verify Razorpay webhook signature
-        
-        Args:
-            webhook_body (str): Raw webhook body
-            webhook_signature (str): Signature header
-            
-        Returns:
-            bool: True if signature is valid
-        """
+        """Return True if the webhook HMAC-SHA256 signature matches."""
         try:
             expected_signature = hmac.new(
                 self.webhook_secret.encode(),
@@ -318,15 +254,7 @@ class RazorpayPaymentService:
             return False
 
     def fetch_payment_details(self, razorpay_payment_id):
-        """
-        Fetch payment details from Razorpay
-        
-        Args:
-            razorpay_payment_id (str): Payment ID
-            
-        Returns:
-            dict: Payment details
-        """
+        """Fetch and return payment details from Razorpay API."""
         try:
             payment = self.client.payment.fetch(razorpay_payment_id)
             return payment

@@ -1,61 +1,7 @@
 from django.db import models
-from django.db.models import Q
 from django.conf import settings
 from apps.cars.models import Car
 from django.utils import timezone
-
-
-# ──────────────────────────────────────────────
-# Custom QuerySet
-# ──────────────────────────────────────────────
-
-class BookingQuerySet(models.QuerySet):
-    """Reusable queryset helpers for booking lookups."""
-
-    @staticmethod
-    def _blocking_q():
-        """
-        A Q object that matches bookings which should block a car:
-          - status confirmed or ongoing  (owner approved / in progress)
-          - status pending AND payment_status paid  (money received,
-            awaiting owner decision — car is already committed)
-        """
-        return (
-            Q(status__in=['confirmed', 'ongoing']) |
-            Q(status='pending', payment_status='paid')
-        )
-
-    def active(self):
-        """Bookings that block the car for their date range."""
-        return self.filter(self._blocking_q())
-
-    def overlapping(self, start_date, end_date):
-        """
-        Standard date-overlap filter using Allen's interval algebra:
-        two ranges [A,B] and [C,D] overlap when A < D and B > C.
-        """
-        return self.filter(
-            start_date__lt=end_date,
-            end_date__gt=start_date,
-        )
-
-    def blocking_for_dates(self, start_date, end_date):
-        """Active bookings whose date range overlaps [start_date, end_date]."""
-        return self.active().overlapping(start_date, end_date)
-
-
-class BookingManager(models.Manager):
-    def get_queryset(self):
-        return BookingQuerySet(self.model, using=self._db)
-
-    def active(self):
-        return self.get_queryset().active()
-
-    def overlapping(self, start_date, end_date):
-        return self.get_queryset().overlapping(start_date, end_date)
-
-    def blocking_for_dates(self, start_date, end_date):
-        return self.get_queryset().blocking_for_dates(start_date, end_date)
 
 
 # ──────────────────────────────────────────────
@@ -65,7 +11,7 @@ class BookingManager(models.Manager):
 class Booking(models.Model):
 
     # Statuses that actively block a car's availability
-    # Note: pending+paid also blocks — see BookingQuerySet._blocking_q()
+    # Note: pending+paid also blocks the car (user paid, owner hasn't decided yet)
     BLOCKING_STATUSES = ('confirmed', 'ongoing')  # simple tuple for direct filter use
 
     # Statuses that release a car back to the available pool
@@ -87,8 +33,6 @@ class Booking(models.Model):
         ('failed',   'Failed'),
         ('refunded', 'Refunded'),
     )
-
-    objects = BookingManager()
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='bookings'
@@ -139,41 +83,59 @@ class Booking(models.Model):
 
     @classmethod
     def has_conflict(cls, car, start_date, end_date, exclude_booking_id=None):
-        """
-        Return True if [start_date, end_date) overlaps with any
-        CONFIRMED or ONGOING booking for this car.
+        """Return True if the date range overlaps any blocking booking for this car."""
+        # Two date ranges overlap when: start1 < end2 AND end1 > start2
 
-        Pass exclude_booking_id to ignore a specific booking (useful
-        when editing an existing booking).
-        """
-        qs = cls.objects.blocking_for_dates(start_date, end_date).filter(car=car)
+        # Check confirmed/ongoing bookings that overlap
+        confirmed_overlap = cls.objects.filter(
+            car=car,
+            status__in=['confirmed', 'ongoing'],
+            start_date__lt=end_date,
+            end_date__gt=start_date,
+        )
+
+        # Check paid-pending bookings that overlap (money received, car is committed)
+        paid_pending_overlap = cls.objects.filter(
+            car=car,
+            status='pending',
+            payment_status='paid',
+            start_date__lt=end_date,
+            end_date__gt=start_date,
+        )
+
         if exclude_booking_id:
-            qs = qs.exclude(pk=exclude_booking_id)
-        return qs.exists()
+            confirmed_overlap = confirmed_overlap.exclude(pk=exclude_booking_id)
+            paid_pending_overlap = paid_pending_overlap.exclude(pk=exclude_booking_id)
+
+        return confirmed_overlap.exists() or paid_pending_overlap.exists()
 
     @classmethod
     def get_available_cars(cls, start_date, end_date, base_queryset=None):
-        """
-        Return a Car queryset containing only cars that have NO
-        blocking booking overlapping [start_date, end_date).
-
-        Usage:
-            available = Booking.get_available_cars(start, end)
-        """
+        """Return cars with no blocking booking overlapping the date range."""
         from apps.cars.models import Car as CarModel
 
+        # Use the provided queryset or fall back to all approved, available cars
         qs = base_queryset if base_queryset is not None else CarModel.objects.filter(
             status='approved', is_available=True
         )
 
-        # IDs of cars that are blocked for this date range
-        blocked_car_ids = (
-            cls.objects
-            .blocking_for_dates(start_date, end_date)
-            .values_list('car_id', flat=True)
-            .distinct()
-        )
+        # Cars blocked by confirmed/ongoing bookings that overlap the dates
+        confirmed_blocked = cls.objects.filter(
+            status__in=['confirmed', 'ongoing'],
+            start_date__lt=end_date,
+            end_date__gt=start_date,
+        ).values_list('car_id', flat=True)
 
+        # Cars blocked by paid-pending bookings that overlap the dates
+        paid_pending_blocked = cls.objects.filter(
+            status='pending',
+            payment_status='paid',
+            start_date__lt=end_date,
+            end_date__gt=start_date,
+        ).values_list('car_id', flat=True)
+
+        # Combine both sets of blocked car IDs and exclude them
+        blocked_car_ids = set(confirmed_blocked) | set(paid_pending_blocked)
         return qs.exclude(id__in=blocked_car_ids)
 
 

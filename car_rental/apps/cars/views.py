@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from django.db.models import Avg, Exists, OuterRef, Q
+from django.db.models import Avg
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -34,24 +34,31 @@ def car_list(request):
     end_date_str   = request.GET.get('end_date', '').strip()
 
     # ── Always exclude cars with any currently-active booking ────────
-    # A booking is "active/blocking" when:
-    #   • status is confirmed or ongoing, OR
-    #   • status is pending and payment_status is paid (money received,
-    #     awaiting owner decision — car is already committed)
-    blocking_booking = Booking.objects.filter(
-        car=OuterRef('pk'),
-    ).filter(
-        Q(status__in=['confirmed', 'ongoing']) |
-        Q(status='pending', payment_status='paid')
-    )
+    # Step 1: find car IDs that are blocked by a confirmed/ongoing booking
+    confirmed_car_ids = Booking.objects.filter(
+        status__in=['confirmed', 'ongoing']
+    ).values_list('car_id', flat=True)
 
+    # Step 2: find car IDs blocked by a pending booking where payment is received
+    paid_pending_car_ids = Booking.objects.filter(
+        status='pending', payment_status='paid'
+    ).values_list('car_id', flat=True)
+
+    # Combine both ID sets — these cars are unavailable
+    blocked_car_ids = set(confirmed_car_ids) | set(paid_pending_car_ids)
+
+    # Step 3: get all approved, available cars that are NOT blocked
     cars = Car.objects.filter(
         status='approved',
         is_available=True,
-    ).exclude(Exists(blocking_booking))
+    ).exclude(id__in=blocked_car_ids)
 
     if search:
-        cars = cars.filter(Q(name__icontains=search) | Q(brand__icontains=search))
+        # Collect IDs matching name, then IDs matching brand, then combine
+        name_ids  = cars.filter(name__icontains=search).values_list('id', flat=True)
+        brand_ids = cars.filter(brand__icontains=search).values_list('id', flat=True)
+        matched_ids = set(name_ids) | set(brand_ids)
+        cars = cars.filter(id__in=matched_ids)
     if car_type:
         cars = cars.filter(car_type__iexact=car_type)
     if location:
@@ -83,13 +90,15 @@ def car_list(request):
         except ValueError:
             pass  # silently ignore malformed dates
 
-    sort_map = {
-        'price_asc':  'price_per_day',
-        'price_desc': '-price_per_day',
-        'newest':     '-created_at',
-        'seats':      '-seats',
-    }
-    cars = cars.order_by(sort_map.get(sort, '-created_at'))
+    # Sort cars based on what the user selected
+    if sort == 'price_asc':
+        cars = cars.order_by('price_per_day')
+    elif sort == 'price_desc':
+        cars = cars.order_by('-price_per_day')
+    elif sort == 'seats':
+        cars = cars.order_by('-seats')
+    else:
+        cars = cars.order_by('-created_at')  # default: newest first
 
     # Distinct values for filter dropdowns (always from the full approved pool)
     base_approved = Car.objects.filter(status='approved', is_available=True)
@@ -111,7 +120,8 @@ def car_list(request):
         'all_locations': all_locations,
         'all_types':     all_types,
         'max_db_price':  int(max_db_price),
-        'active_filters': any([search, car_type, location, max_price, min_seats, date_filter_active]),
+        # True if any filter has been applied by the user
+        'active_filters': bool(search or car_type or location or max_price or min_seats or date_filter_active),
         # Pass dates back so the form can retain values
         'start_date': start_date_str,
         'end_date':   end_date_str,
@@ -122,13 +132,18 @@ def car_detail(request, pk):
     """View car details"""
     car = get_object_or_404(Car, pk=pk, status='approved')
 
-    # Check whether this car has any blocking booking right now
-    is_booked = Booking.objects.filter(
-        car=car,
-    ).filter(
-        Q(status__in=['confirmed', 'ongoing']) |
-        Q(status='pending', payment_status='paid')
+    # Check if car has a confirmed or ongoing booking
+    has_active = Booking.objects.filter(
+        car=car, status__in=['confirmed', 'ongoing']
     ).exists()
+
+    # Also check pending bookings where the user already paid
+    has_paid_pending = Booking.objects.filter(
+        car=car, status='pending', payment_status='paid'
+    ).exists()
+
+    # Car is considered booked if either condition is true
+    is_booked = has_active or has_paid_pending
 
     reviews = Review.objects.filter(car=car).select_related('user').order_by('-created_at')
     rating_average = reviews.aggregate(avg=Avg('rating'))['avg']
@@ -171,20 +186,28 @@ class OwnerCarListView(OwnerCarMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        """Filter cars by owner and annotate each with its active-booking count."""
-        # Subquery: does this car have at least one blocking booking?
-        blocking_booking = Booking.objects.filter(
-            car=OuterRef('pk'),
-        ).filter(
-            Q(status__in=['confirmed', 'ongoing']) |
-            Q(status='pending', payment_status='paid')
+        """Get this owner's cars and set has_active_booking on each one."""
+        # Get all cars for this owner, newest first
+        owner_cars = Car.objects.filter(owner=self.request.user).order_by('-created_at')
+
+        # Collect IDs of cars blocked by confirmed or ongoing bookings
+        confirmed_ids = set(
+            Booking.objects.filter(status__in=['confirmed', 'ongoing']).values_list('car_id', flat=True)
         )
 
-        return (
-            Car.objects.filter(owner=self.request.user)
-            .annotate(has_active_booking=Exists(blocking_booking))
-            .order_by('-created_at')
+        # Collect IDs of cars blocked by paid-but-unconfirmed bookings
+        paid_pending_ids = set(
+            Booking.objects.filter(status='pending', payment_status='paid').values_list('car_id', flat=True)
         )
+
+        # Combine into one set of blocked car IDs
+        blocked_ids = confirmed_ids | paid_pending_ids
+
+        # Set has_active_booking directly on each car object (plain Python attribute)
+        for car in owner_cars:
+            car.has_active_booking = car.id in blocked_ids
+
+        return owner_cars
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
