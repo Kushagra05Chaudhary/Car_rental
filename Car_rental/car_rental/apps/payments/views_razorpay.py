@@ -335,11 +335,16 @@ def user_transactions(request):
 def download_invoice(request, payment_id):
     """Download invoice PDF for a payment"""
     try:
-        payment = Payment.objects.get(id=payment_id, user=request.user)
+        # Admins can download any invoice; regular users only their own
+        if request.user.is_superuser or getattr(request.user, 'role', None) == 'admin':
+            payment = Payment.objects.get(id=payment_id)
+        else:
+            payment = Payment.objects.get(id=payment_id, user=request.user)
         
         if payment.status != 'completed':
             messages.error(request, 'Invoice available only for completed payments')
-            return redirect('user_transactions')
+            redirect_url = 'admin_transactions' if (request.user.is_superuser or getattr(request.user, 'role', None) == 'admin') else 'user_transactions'
+            return redirect(redirect_url)
 
         # Generate PDF
         pdf_bytes = generate_invoice_pdf(payment)
@@ -351,7 +356,8 @@ def download_invoice(request, payment_id):
 
     except Payment.DoesNotExist:
         messages.error(request, 'Payment not found')
-        return redirect('user_transactions')
+        redirect_url = 'admin_transactions' if (request.user.is_superuser or getattr(request.user, 'role', None) == 'admin') else 'user_transactions'
+        return redirect(redirect_url)
 
 
 # ==================== ADMIN PAYMENT MANAGEMENT ====================

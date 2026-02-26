@@ -216,10 +216,11 @@ class RazorpayPaymentService:
             payment.status = 'refunded'
             payment.save()
 
-            # Update booking status to 'refunded' so the car is
+            # Update booking status and payment_status to 'refunded' so the car is
             # released back into the available pool.
             booking = payment.booking
             booking.status = 'refunded'
+            booking.payment_status = 'refunded'
             booking.save()
 
             logger.info(f"Refund processed: {refund['id']} for payment {payment.id}")

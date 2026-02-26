@@ -46,8 +46,8 @@
                         {% elif booking.status == 'completed' %}
                             bg-blue-100 text-blue-800
                         {% elif booking.status == 'rejected' %}
-                            bg-red-100 text-red-800
-                        {% elif booking.status == 'cancelled' %}
+                            bg-red-100 text-red-800                        {% elif booking.status == 'refunded' %}
+                            bg-purple-100 text-purple-800                        {% elif booking.status == 'cancelled' %}
                             bg-gray-100 text-gray-800
                         {% else %}
                             bg-gray-100 text-gray-800
@@ -224,6 +224,24 @@
                             <p class="text-gray-700">{{ booking.payment.created_at|date:"M d, Y - h:i A" }}</p>
                         </div>
                         
+                        <!-- Refund Details -->
+                        {% if refund %}
+                        <div class="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                            <p class="text-sm font-semibold text-purple-800 mb-2">↩ Refund Details</p>
+                            <div class="space-y-1 text-sm text-purple-700">
+                                <p><span class="font-medium">Amount:</span> ₹{{ refund.amount }}</p>
+                                <p><span class="font-medium">Status:</span> {{ refund.get_status_display }}</p>
+                                <p><span class="font-medium">Date:</span> {{ refund.created_at|date:"M d, Y - h:i A" }}</p>
+                                {% if refund.razorpay_refund_id %}
+                                <p class="font-mono text-xs break-all"><span class="font-medium font-sans">Refund ID:</span> {{ refund.razorpay_refund_id }}</p>
+                                {% endif %}
+                                {% if refund.reason %}
+                                <p><span class="font-medium">Reason:</span> {{ refund.reason }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+
                         <!-- Download Invoice -->
                         {% if booking.payment.status == 'completed' %}
                         <div class="mt-4">
@@ -278,19 +296,21 @@
                             <div class="relative">
                                 <div class="absolute -left-[1.3rem] w-5 h-5 rounded-full 
                                     {% if booking.status == 'confirmed' or booking.status == 'completed' %}bg-green-500
-                                    {% elif booking.status == 'rejected' %}bg-red-500
+                                    {% elif booking.status == 'rejected' or booking.status == 'refunded' %}bg-red-500
                                     {% else %}bg-gray-300{% endif %} 
                                     border-4 border-white"></div>
                                 <div>
                                     <p class="font-semibold 
                                         {% if booking.status == 'confirmed' or booking.status == 'completed' %}text-gray-900
-                                        {% elif booking.status == 'rejected' %}text-red-600
+                                        {% elif booking.status == 'rejected' or booking.status == 'refunded' %}text-red-600
                                         {% else %}text-gray-400{% endif %} text-sm">
                                         {% if booking.status == 'pending' %}
                                             Awaiting Owner Approval
                                         {% elif booking.status == 'confirmed' %}
                                             Approved by Owner
                                         {% elif booking.status == 'rejected' %}
+                                            Rejected by Owner
+                                        {% elif booking.status == 'refunded' %}
                                             Rejected by Owner
                                         {% else %}
                                             {{ booking.get_status_display }}
@@ -301,6 +321,20 @@
                                     {% endif %}
                                 </div>
                             </div>
+
+                            <!-- Step 3b: Refund (shown only when status is refunded) -->
+                            {% if booking.status == 'refunded' %}
+                            <div class="relative">
+                                <div class="absolute -left-[1.3rem] w-5 h-5 rounded-full bg-purple-500 border-4 border-white"></div>
+                                <div>
+                                    <p class="font-semibold text-purple-700 text-sm">Refund Processed</p>
+                                    {% if refund %}
+                                    <p class="text-xs text-gray-500">{{ refund.created_at|date:"M d, Y - h:i A" }}</p>
+                                    <p class="text-xs text-gray-500">₹{{ refund.amount }} refunded</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
                             
                             <!-- Step 4: Rental Period -->
                             {% if booking.status == 'confirmed' or booking.status == 'completed' %}
@@ -350,6 +384,23 @@
                                     <p class="text-sm text-red-800">
                                         <strong>✗ Rejected</strong><br>
                                         The owner could not accept this booking.
+                                    </p>
+                                </div>
+                            {% elif booking.status == 'refunded' %}
+                                <div class="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                                    <p class="text-sm text-purple-800">
+                                        <strong>↩ Rejected &amp; Refunded</strong><br>
+                                        The owner rejected your booking and your payment has been refunded.
+                                        {% if refund %}
+                                        <br><span class="text-xs mt-1 block">Refund ID: {{ refund.razorpay_refund_id }}</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            {% elif booking.status == 'cancelled' %}
+                                <div class="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                                    <p class="text-sm text-gray-800">
+                                        <strong>✗ Cancelled</strong><br>
+                                        This booking was cancelled.
                                     </p>
                                 </div>
                             {% endif %}

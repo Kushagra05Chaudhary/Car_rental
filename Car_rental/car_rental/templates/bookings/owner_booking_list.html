@@ -69,6 +69,7 @@
                         <option value="confirmed" {% if request.GET.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
                         <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Completed</option>
                         <option value="rejected" {% if request.GET.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                        <option value="refunded" {% if request.GET.status == 'refunded' %}selected{% endif %}>Refunded</option>
                     </select>
                 </div>
                 <button type="submit" class="btn-primary">
@@ -126,6 +127,8 @@
                                         bg-blue-500
                                     {% elif booking.status == 'rejected' %}
                                         bg-red-500
+                                    {% elif booking.status == 'refunded' %}
+                                        bg-purple-500
                                     {% else %}
                                         bg-gray-500
                                     {% endif %}">
