@@ -53,7 +53,6 @@ class OwnerCarForm(forms.ModelForm):
             }),
             'image': forms.FileInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500',
-                'accept': 'image/jpeg,image/png'
             }),
         }
     
@@ -66,17 +65,6 @@ class OwnerCarForm(forms.ModelForm):
     def clean_image(self):
         """Validate image file"""
         image = self.cleaned_data.get('image')
-        
-        if image:
-            # Check file size (max 5MB)
-            if image.size > 5 * 1024 * 1024:
-                raise forms.ValidationError('Image size must not exceed 5MB.')
-            
-            # Check file type
-            valid_types = ['image/jpeg', 'image/png']
-            if image.content_type not in valid_types:
-                raise forms.ValidationError('Only JPG and PNG images are allowed.')
-        
         return image
     
     def clean_price_per_day(self):

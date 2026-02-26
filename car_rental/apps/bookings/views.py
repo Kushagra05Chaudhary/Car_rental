@@ -191,6 +191,16 @@ class UserBookingDetailView(LoginRequiredMixin, DetailView):
             return redirect('admin_dashboard')
         return super().get(request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        booking = self.object
+        # Pass refund record if it exists (for rejected/refunded bookings)
+        refund = None
+        if hasattr(booking, 'payment') and booking.payment:
+            refund = booking.payment.refunds.order_by('-created_at').first()
+        context['refund'] = refund
+        return context
+
 
 @login_required
 def create_booking(request, car_id):

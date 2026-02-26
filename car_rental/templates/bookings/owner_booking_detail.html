@@ -25,6 +25,8 @@
                         bg-blue-100 text-blue-800
                     {% elif booking.status == 'rejected' %}
                         bg-red-100 text-red-800
+                    {% elif booking.status == 'refunded' %}
+                        bg-purple-100 text-purple-800
                     {% else %}
                         bg-gray-100 text-gray-800
                     {% endif %}">
@@ -131,6 +133,11 @@
                     {% elif booking.status == 'rejected' %}
                         <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
                             <p class="text-red-800 text-sm">This booking has been rejected.</p>
+                        </div>
+                    {% elif booking.status == 'refunded' %}
+                        <div class="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                            <p class="text-purple-800 text-sm font-semibold">↩ Rejected &amp; Refunded</p>
+                            <p class="text-purple-700 text-sm mt-1">This booking was rejected and the user's payment has been refunded.</p>
                         </div>
                     {% endif %}
                     

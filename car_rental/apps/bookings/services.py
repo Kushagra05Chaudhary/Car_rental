@@ -102,6 +102,7 @@ def reject_booking(booking):
     if booking.status != 'pending':
         raise ValueError('Only pending bookings can be rejected.')
 
+    refund_initiated = False
     if booking.payment_status == 'paid' and hasattr(booking, 'payment'):
         try:
             from apps.payments.services import RazorpayPaymentService
@@ -110,7 +111,8 @@ def reject_booking(booking):
                 booking.payment.id,
                 reason='Booking rejected by owner',
             )
-            # create_refund already sets booking.status = 'refunded'
+            # create_refund already sets booking.status and booking.payment_status = 'refunded'
+            refund_initiated = True
         except Exception as e:
             import logging
             logging.getLogger(__name__).error(f'Refund failed for booking {booking.id}: {e}')
@@ -124,7 +126,7 @@ def reject_booking(booking):
         booking.user,
         'Booking rejected',
         f"Your booking for {booking.car.name} was rejected by the owner. "
-        + ("A refund has been initiated." if booking.payment_status == 'paid' else ""),
+        + ("A refund has been initiated." if refund_initiated else ""),
     )
     return booking
 
